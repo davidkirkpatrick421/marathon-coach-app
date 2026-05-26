@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+mcp-server/node_modules/
+webapp/node_modules/
+
+# Environment variables — NEVER commit these
+.env
+.env.local
+mcp-server/.env
+webapp/.env
+webapp/.env.local
+
+# Build output
+webapp/dist/
+webapp/.vercel/
+
+# Misc
+.DS_Store
+*.log
