@@ -17,3 +17,4 @@ webapp/.vercel/
 # Misc
 .DS_Store
 *.log
+CLAUDE.md

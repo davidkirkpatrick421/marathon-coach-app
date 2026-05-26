@@ -1,0 +1,17 @@
+{
+  "name": "marathon-mcp-server",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "@supabase/supabase-js": "^2.49.8",
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2",
+    "ws": "^8.21.0"
+  }
+}
