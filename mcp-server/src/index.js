@@ -1,14 +1,14 @@
 import 'dotenv/config'
 import express from 'express'
 import supabase from './db/supabase.js'
-import { authRoutes } from './auth.js'
+import { authRoutes } from './strava/auth.js'
 
 const app = express()
 app.use(express.json())
 
 authRoutes(app)
 
-app.get('/health', async (req, res) => {
+app.get('/health', async (_req, res) => {
   const { error } = await supabase.from('activities').select('id').limit(1)
   res.json({
     status: 'ok',

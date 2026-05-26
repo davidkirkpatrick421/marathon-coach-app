@@ -1,15 +1,7 @@
-import supabase from './db/supabase.js'
+import supabase from '../db/supabase.js'
+import { backfillActivities } from './activities.js'
 
-const STRAVA_BASE = 'https://www.strava.com/api/v3'
 const STRAVA_TOKEN_URL = 'https://www.strava.com/oauth/token'
-const PLAN_START = new Date('2026-05-11')
-
-// ─── Token helpers ───────────────────────────────────────────────────────────
-
-function getWeekNumber(activityDate) {
-  const diff = new Date(activityDate) - PLAN_START
-  return Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1
-}
 
 async function refreshStravaToken(refreshToken) {
   const res = await fetch(STRAVA_TOKEN_URL, {
@@ -52,54 +44,7 @@ export async function getValidToken() {
   return token.access_token
 }
 
-// ─── Activity ingestion ───────────────────────────────────────────────────────
-
-function mapActivity(raw) {
-  const speedMps = raw.average_speed ?? 0
-  const avgPace = speedMps > 0 ? (1000 / 60) / speedMps : null
-
-  return {
-    strava_id: raw.id,
-    activity_type: raw.type,
-    date: raw.start_date,
-    distance_km: raw.distance != null ? raw.distance / 1000 : null,
-    duration_seconds: raw.moving_time ?? null,
-    avg_pace_per_km: avgPace,
-    avg_hr: raw.average_heartrate ?? null,
-    max_hr: raw.max_heartrate ?? null,
-    avg_cadence: raw.average_cadence != null ? raw.average_cadence * 2 : null,
-    elevation_gain: raw.total_elevation_gain ?? null,
-    calories: raw.calories ?? null,
-    week_number: getWeekNumber(raw.start_date),
-    raw_data: raw,
-  }
-}
-
-async function backfillActivities(accessToken) {
-  const after = Math.floor(PLAN_START.getTime() / 1000)
-  const res = await fetch(
-    `${STRAVA_BASE}/athlete/activities?per_page=200&after=${after}`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
-  )
-  if (!res.ok) throw new Error(`Strava activities fetch failed: ${res.status}`)
-
-  const activities = await res.json()
-  if (!activities.length) return 0
-
-  const rows = activities.map(mapActivity)
-
-  const { error } = await supabase
-    .from('activities')
-    .upsert(rows, { onConflict: 'strava_id' })
-
-  if (error) throw new Error(`Supabase upsert failed: ${error.message}`)
-  return rows.length
-}
-
-// ─── Express route handlers ───────────────────────────────────────────────────
-
 export function authRoutes(app) {
-  // Step 1 — redirect user to Strava
   app.get('/auth/strava', (_req, res) => {
     const params = new URLSearchParams({
       client_id: process.env.STRAVA_CLIENT_ID,
@@ -111,7 +56,6 @@ export function authRoutes(app) {
     res.redirect(`https://www.strava.com/oauth/authorize?${params}`)
   })
 
-  // Step 2 — Strava redirects back with auth code
   app.get('/auth/callback', async (req, res) => {
     const { code, error } = req.query
 
@@ -120,7 +64,6 @@ export function authRoutes(app) {
     }
 
     try {
-      // Exchange code for tokens
       const tokenRes = await fetch(STRAVA_TOKEN_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -142,7 +85,6 @@ export function authRoutes(app) {
         updated_at: new Date().toISOString(),
       }
 
-      // Upsert — always keep single row (personal app)
       const { data: existing } = await supabase
         .from('auth_tokens')
         .select('id')
@@ -154,7 +96,6 @@ export function authRoutes(app) {
         await supabase.from('auth_tokens').insert(tokenRow)
       }
 
-      // Backfill activities since plan start
       const count = await backfillActivities(tokenData.access_token)
 
       res.json({
