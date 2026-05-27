@@ -97,3 +97,7 @@ CREATE TABLE IF NOT EXISTS plan_adjustments (
 GRANT USAGE ON SCHEMA public TO service_role;
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO service_role;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
+
+-- Grant anon read access for the frontend (single-user app, RLS intentionally disabled)
+GRANT USAGE ON SCHEMA public TO anon;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO anon;
