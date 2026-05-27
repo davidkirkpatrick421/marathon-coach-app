@@ -1,11 +1,38 @@
 import 'dotenv/config'
 import express from 'express'
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import supabase from './db/supabase.js'
 import { authRoutes } from './strava/auth.js'
 import { webhookRoutes } from './strava/webhook.js'
+import { registerActivitiesTool } from './tools/activities.js'
+import { registerSummaryTool } from './tools/summary.js'
 
 const app = express()
 app.use(express.json())
+
+function createMcpServer() {
+  const server = new McpServer({ name: 'marathon-coach', version: '1.0.0' })
+  registerActivitiesTool(server)
+  registerSummaryTool(server)
+  return server
+}
+
+app.post('/mcp', async (req, res) => {
+  const server = createMcpServer()
+  const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined })
+  await server.connect(transport)
+  res.on('finish', () => server.close())
+  await transport.handleRequest(req, res, req.body)
+})
+
+app.get('/mcp', async (req, res) => {
+  const server = createMcpServer()
+  const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined })
+  await server.connect(transport)
+  res.on('finish', () => server.close())
+  await transport.handleRequest(req, res)
+})
 
 authRoutes(app)
 webhookRoutes(app)
