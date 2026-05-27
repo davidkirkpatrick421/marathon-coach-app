@@ -4,7 +4,7 @@ import SectionLabel from '../components/SectionLabel.jsx'
 export default function Strength() {
   return (
     <div>
-      <div className="grid grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
         <div>
           <SectionLabel>Strength A — Weeks 1–8</SectionLabel>
           <p className="text-xs text-slate-400 mb-4 leading-relaxed">

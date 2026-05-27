@@ -24,8 +24,8 @@ export default function Phase1({ currentWeek }) {
         Optional 4th run day can be introduced from Week 9 if 3-day weeks feel comfortable.
       </div>
 
-      <div className="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden mb-4">
-        <table className="w-full text-sm">
+      <div className="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden mb-4 overflow-x-auto">
+        <table className="w-full min-w-[600px] text-sm">
           <thead>
             <tr className="border-b border-slate-800">
               {['Wk', 'Dates', 'Run 1', 'Run 2', 'Long Run', 'Target', 'Actual', 'Gym', 'Cycling'].map(h => (
@@ -78,7 +78,7 @@ export default function Phase1({ currentWeek }) {
         </table>
       </div>
 
-      <div className="flex gap-5 text-xs font-mono mb-6">
+      <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs font-mono mb-6">
         <span className="text-orange-400">● Current week</span>
         <span className="text-emerald-400">↓ Deload week</span>
         <span className="text-emerald-400">Actual in green = on/over target</span>
@@ -86,7 +86,7 @@ export default function Phase1({ currentWeek }) {
       </div>
 
       <SectionLabel>Phase 1 Exit Targets</SectionLabel>
-      <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 grid grid-cols-2 gap-3">
+      <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
         {[
           ['Long run',           '15–17km comfortably'],
           ['Weekly mileage',     '25–30km'],

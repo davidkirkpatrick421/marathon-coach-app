@@ -19,7 +19,7 @@ export default function Principles() {
 
       <div>
         <SectionLabel>Form Cues — Every Run</SectionLabel>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {[
             ['Short, quick steps',        'Foot lands under hips, not ahead. Overstriding = braking.'],
             ['Relaxed shoulders',         'Drop them consciously every few minutes. Chef tension is real.'],

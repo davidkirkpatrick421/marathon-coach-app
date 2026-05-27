@@ -54,7 +54,7 @@ export default function Overview({ currentWeek }) {
       {/* Race Goals */}
       <section>
         <SectionLabel>Race Goals</SectionLabel>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {goals.map(g => (
             <div
               key={g.label}
@@ -72,7 +72,7 @@ export default function Overview({ currentWeek }) {
       </section>
 
       {/* Week Summary + Baseline */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <section>
           <SectionLabel>This Week — Week {currentWeek} · {getWeekDates(currentWeek)}</SectionLabel>
           <WeekSummaryCard planWeek={planWeek} weekStats={weekStats} loading={loading} />
@@ -149,7 +149,7 @@ export default function Overview({ currentWeek }) {
       </section>
 
       {/* Charts */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <section>
           <SectionLabel>Weekly Mileage</SectionLabel>
           <MileageChart data={weeklyData} />

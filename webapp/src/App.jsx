@@ -29,11 +29,13 @@ export default function App() {
           <div className="flex items-baseline justify-between mb-4">
             <h1 className="text-xl font-semibold text-slate-100">David's Training Plan</h1>
             <div className="flex items-center gap-4">
-              {goals.map(g => (
-                <span key={g.label} className="text-sm font-mono" style={{ color: g.color }}>
-                  {g.emoji} {g.time}
-                </span>
-              ))}
+              <div className="hidden sm:flex items-center gap-4">
+                {goals.map(g => (
+                  <span key={g.label} className="text-sm font-mono" style={{ color: g.color }}>
+                    {g.emoji} {g.time}
+                  </span>
+                ))}
+              </div>
               <span className="text-xs font-mono text-slate-600">Wk {currentWeek} · Ph1</span>
             </div>
           </div>
