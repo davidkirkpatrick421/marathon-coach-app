@@ -1,10 +1,13 @@
-import { useMemo } from 'react'
+import React, { useMemo } from 'react'
 import { useActivities } from '../hooks/useActivities.js'
+import { usePlanWeeks } from '../hooks/usePlanWeeks.js'
 import { phase1Weeks, getWeekDates } from '../lib/data.js'
 import SectionLabel from '../components/SectionLabel.jsx'
 
 export default function Phase1({ currentWeek }) {
   const { activities } = useActivities()
+  const { weeks: dbWeeks } = usePlanWeeks()
+  const planWeeks = dbWeeks ?? phase1Weeks
 
   const weekActuals = useMemo(() => {
     const map = {}
@@ -36,7 +39,7 @@ export default function Phase1({ currentWeek }) {
             </tr>
           </thead>
           <tbody>
-            {phase1Weeks.map(w => {
+            {planWeeks.map(w => {
               const isCurrent = w.week === currentWeek
               const isPast = w.week < currentWeek
               const actual = weekActuals[w.week]
@@ -51,27 +54,37 @@ export default function Phase1({ currentWeek }) {
                     : 'text-red-400'
 
               return (
-                <tr
-                  key={w.week}
-                  className={`border-b border-slate-800/60 last:border-0 ${
-                    isCurrent ? 'bg-orange-950/20' : w.deload ? 'bg-emerald-950/10' : ''
-                  } ${isPast ? 'opacity-40' : ''}`}
-                  style={{ borderLeft: `3px solid ${isCurrent ? '#f97316' : w.deload ? '#22c55e' : 'transparent'}` }}
-                >
-                  <td className={`px-3 py-2.5 font-mono text-xs ${isCurrent ? 'text-orange-400' : w.deload ? 'text-emerald-400' : 'text-slate-500'}`}>
-                    {w.week}{w.deload ? ' ↓' : ''}
-                  </td>
-                  <td className="px-3 py-2.5 font-mono text-xs text-slate-600 whitespace-nowrap">{getWeekDates(w.week)}</td>
-                  <td className="px-3 py-2.5 text-xs text-slate-300">{w.run1}</td>
-                  <td className="px-3 py-2.5 text-xs text-slate-300">{w.run2}</td>
-                  <td className="px-3 py-2.5 text-xs text-slate-300">{w.longRun}</td>
-                  <td className="px-3 py-2.5 font-mono text-xs text-orange-400 font-medium">{w.total}</td>
-                  <td className={`px-3 py-2.5 font-mono text-xs font-medium ${actualColor}`}>
-                    {actualKm != null && actualKm > 0 ? `${actualKm}km` : '—'}
-                  </td>
-                  <td className="px-3 py-2.5 text-xs text-slate-500">{w.gym}</td>
-                  <td className="px-3 py-2.5 text-xs text-slate-500">{w.cycling}</td>
-                </tr>
+                <React.Fragment key={w.week}>
+                  <tr
+                    className={`border-b ${w.notes ? 'border-slate-800/20' : 'border-slate-800/60 last:border-0'} ${
+                      isCurrent ? 'bg-orange-950/20' : w.deload ? 'bg-emerald-950/10' : ''
+                    } ${isPast ? 'opacity-40' : ''}`}
+                    style={{ borderLeft: `3px solid ${isCurrent ? '#f97316' : w.deload ? '#22c55e' : 'transparent'}` }}
+                  >
+                    <td className={`px-3 py-2.5 font-mono text-xs ${isCurrent ? 'text-orange-400' : w.deload ? 'text-emerald-400' : 'text-slate-500'}`}>
+                      {w.week}{w.deload ? ' ↓' : ''}
+                    </td>
+                    <td className="px-3 py-2.5 font-mono text-xs text-slate-600 whitespace-nowrap">{getWeekDates(w.week)}</td>
+                    <td className="px-3 py-2.5 text-xs text-slate-300">{w.run1}</td>
+                    <td className="px-3 py-2.5 text-xs text-slate-300">{w.run2}</td>
+                    <td className="px-3 py-2.5 text-xs text-slate-300">{w.longRun}</td>
+                    <td className="px-3 py-2.5 font-mono text-xs text-orange-400 font-medium">{w.total}</td>
+                    <td className={`px-3 py-2.5 font-mono text-xs font-medium ${actualColor}`}>
+                      {actualKm != null && actualKm > 0 ? `${actualKm}km` : '—'}
+                    </td>
+                    <td className="px-3 py-2.5 text-xs text-slate-500">{w.gym}</td>
+                    <td className="px-3 py-2.5 text-xs text-slate-500">{w.cycling}</td>
+                  </tr>
+                  {w.notes && (
+                    <tr className={`border-b border-slate-800/60 ${isCurrent ? 'bg-orange-950/20' : w.deload ? 'bg-emerald-950/10' : ''} ${isPast ? 'opacity-40' : ''}`}
+                      style={{ borderLeft: `3px solid ${isCurrent ? '#f97316' : w.deload ? '#22c55e' : 'transparent'}` }}
+                    >
+                      <td colSpan={9} className="px-3 pb-2 pt-0 text-xs text-amber-400/80 italic">
+                        {w.notes}
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               )
             })}
           </tbody>

@@ -8,6 +8,7 @@ import { webhookRoutes } from './strava/webhook.js'
 import { registerActivitiesTool } from './tools/activities.js'
 import { registerSummaryTool } from './tools/summary.js'
 import { registerCheckinTool } from './tools/checkins.js'
+import { registerPlanTools } from './tools/plan.js'
 import { getValidToken } from './strava/auth.js'
 import { backfillActivities } from './strava/activities.js'
 
@@ -19,6 +20,7 @@ function createMcpServer() {
   registerActivitiesTool(server)
   registerSummaryTool(server)
   registerCheckinTool(server)
+  registerPlanTools(server)
   return server
 }
 
