@@ -1,4 +1,4 @@
-export const PLAN_START = new Date('2026-05-11')
+export const PLAN_START = new Date('2026-05-05')
 
 export function getCurrentWeek() {
   const diff = Math.floor((new Date() - PLAN_START) / (7 * 24 * 60 * 60 * 1000))
