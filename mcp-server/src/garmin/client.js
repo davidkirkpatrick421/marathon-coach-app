@@ -1,4 +1,5 @@
-import { GarminConnect } from '@gooin/garmin-connect'
+import pkg from '@gooin/garmin-connect'
+const { GarminConnect } = pkg
 import supabase from '../db/supabase.js'
 
 // Module-level cache — lives for the server process lifetime
