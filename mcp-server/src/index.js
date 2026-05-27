@@ -7,6 +7,9 @@ import { authRoutes } from './strava/auth.js'
 import { webhookRoutes } from './strava/webhook.js'
 import { registerActivitiesTool } from './tools/activities.js'
 import { registerSummaryTool } from './tools/summary.js'
+import { registerCheckinTool } from './tools/checkins.js'
+import { getValidToken } from './strava/auth.js'
+import { backfillActivities } from './strava/activities.js'
 
 const app = express()
 app.use(express.json())
@@ -15,6 +18,7 @@ function createMcpServer() {
   const server = new McpServer({ name: 'marathon-coach', version: '1.0.0' })
   registerActivitiesTool(server)
   registerSummaryTool(server)
+  registerCheckinTool(server)
   return server
 }
 
@@ -36,6 +40,17 @@ app.get('/mcp', async (req, res) => {
 
 authRoutes(app)
 webhookRoutes(app)
+
+app.post('/admin/backfill', async (_req, res) => {
+  try {
+    const accessToken = await getValidToken()
+    const count = await backfillActivities(accessToken)
+    res.json({ status: 'ok', activities_synced: count })
+  } catch (err) {
+    console.error('Backfill error:', err)
+    res.status(500).json({ error: err.message })
+  }
+})
 
 app.get('/health', async (_req, res) => {
   const { error } = await supabase.from('activities').select('id').limit(1)

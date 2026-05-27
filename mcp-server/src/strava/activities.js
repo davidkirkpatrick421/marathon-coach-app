@@ -1,7 +1,7 @@
 import supabase from '../db/supabase.js'
 
 const STRAVA_BASE = 'https://www.strava.com/api/v3'
-const PLAN_START = new Date('2026-05-11')
+const PLAN_START = new Date('2026-05-05')
 
 export function getWeekNumber(activityDate) {
   const diff = new Date(activityDate) - PLAN_START
@@ -15,6 +15,7 @@ export function mapActivity(raw) {
   return {
     strava_id: raw.id,
     activity_type: raw.type,
+    name: raw.name ?? null,
     date: raw.start_date,
     distance_km: raw.distance != null ? raw.distance / 1000 : null,
     duration_seconds: raw.moving_time ?? null,

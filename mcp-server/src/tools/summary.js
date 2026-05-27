@@ -1,6 +1,6 @@
 import supabase from '../db/supabase.js'
 
-const PLAN_START = new Date('2026-05-11')
+const PLAN_START = new Date('2026-05-05')
 
 function currentWeekNumber() {
   const diff = Date.now() - PLAN_START.getTime()
@@ -65,7 +65,7 @@ export function registerSummaryTool(server) {
         plan: {
           race: 'Belfast Marathon — May 2027',
           goals: { northStar: 'Sub-3:00', A: '3:15–3:30', B: '3:45–4:00' },
-          startDate: '2026-05-11',
+          startDate: '2026-05-05',
           totalWeeks: 52,
         },
         currentWeek: {
