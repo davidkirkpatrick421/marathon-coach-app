@@ -1,4 +1,4 @@
-import { getGarminClient, clearGarminClient } from './client.js'
+import { getGarminClient, clearGarminClient, persistTokens } from './client.js'
 import supabase from '../db/supabase.js'
 
 export async function syncGarminDay(dateStr) {
@@ -86,5 +86,12 @@ export async function syncGarminRecent(days = 7) {
   }
 
   console.log(`[Garmin] Synced ${results.length}/${days} days`)
+
+  // Persist any refreshed tokens back to Supabase after each sync run
+  if (results.length > 0) {
+    const client = await getGarminClient().catch(() => null)
+    if (client) await persistTokens(client)
+  }
+
   return results
 }
