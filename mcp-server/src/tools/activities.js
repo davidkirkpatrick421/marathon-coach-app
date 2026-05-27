@@ -9,7 +9,7 @@ export function registerActivitiesTool(server) {
     async ({ count = 10 }) => {
       const { data, error } = await supabase
         .from('activities')
-        .select('date, name, activity_type, distance_km, duration_seconds, avg_pace_per_km, avg_hr, max_hr, avg_cadence, elevation_gain, calories, week_number')
+        .select('strava_id, date, name, activity_type, distance_km, duration_seconds, avg_pace_per_km, avg_hr, max_hr, avg_cadence, elevation_gain, calories, week_number')
         .order('date', { ascending: false })
         .limit(count)
 
