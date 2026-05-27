@@ -7,5 +7,8 @@ CREATE TABLE IF NOT EXISTS garmin_tokens (
   updated_at   TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
+-- Grant service_role and authenticated full access (needed for Railway server reads/writes)
+GRANT ALL ON garmin_tokens TO service_role, authenticated;
+
 -- Block anon key from reading the token (same pattern as auth_tokens)
 REVOKE SELECT ON garmin_tokens FROM anon;

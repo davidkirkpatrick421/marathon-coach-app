@@ -15,12 +15,15 @@ export function registerSummaryTool(server) {
     async () => {
       const weekNum = currentWeekNumber()
 
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+
       const [
         { data: weekActivities },
         { data: planWeek },
         { data: recentRuns },
         { data: phase },
         { data: checkin },
+        { data: garminMetrics },
       ] = await Promise.all([
         supabase
           .from('activities')
@@ -49,6 +52,11 @@ export function registerSummaryTool(server) {
           .order('date', { ascending: false })
           .limit(1)
           .single(),
+        supabase
+          .from('garmin_metrics')
+          .select('date, sleep_score, sleep_duration_hrs, resting_hr, hrv_7day_avg, hrv_status, body_battery_morning')
+          .gte('date', sevenDaysAgo)
+          .order('date', { ascending: false }),
       ])
 
       // Aggregate last 4 weeks into week totals
@@ -92,6 +100,15 @@ export function registerSummaryTool(server) {
           .sort(([a], [b]) => Number(a) - Number(b))
           .map(([week, km]) => ({ week: Number(week), km: Math.round(km * 10) / 10 })),
         latestCheckin: checkin ?? null,
+        garminRecent: (garminMetrics ?? []).map(g => ({
+          date: g.date,
+          sleep_score: g.sleep_score,
+          sleep_duration_hrs: g.sleep_duration_hrs ? parseFloat(g.sleep_duration_hrs) : null,
+          resting_hr: g.resting_hr,
+          hrv_7day_avg: g.hrv_7day_avg,
+          hrv_status: g.hrv_status,
+          body_battery_morning: g.body_battery_morning,
+        })),
         healthNotes: {
           knownConcerns: ['left posterior tibialis', 'heel-to-midfoot gait transition', 'sleep quality'],
           trainingSchedule: '2–3 runs/week + gym 1–2x + Pilates Wednesday + cycling',

@@ -21,12 +21,10 @@ export async function getGarminClient() {
     .single()
 
   if (tokenFetchError) console.error('[Garmin] Token fetch error:', tokenFetchError.code, tokenFetchError.message)
-  console.log('[Garmin] Token row found:', !!tokenRow, '| refresh_expiry:', tokenRow?.oauth2_token?.refresh_token_expires_at)
 
   if (tokenRow?.oauth1_token && tokenRow?.oauth2_token) {
     const now = Date.now() / 1000
     const refreshExpiry = tokenRow.oauth2_token?.refresh_token_expires_at ?? 0
-    console.log('[Garmin] Expiry check — refreshExpiry:', refreshExpiry, '> now:', now, '=', refreshExpiry > now)
 
     if (refreshExpiry > now) {
       // Refresh token still valid — load and trust it. The library auto-refreshes
