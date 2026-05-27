@@ -21,15 +21,19 @@ export async function getGarminClient() {
     .single()
 
   if (tokenRow?.oauth1_token && tokenRow?.oauth2_token) {
-    try {
+    const now = Date.now() / 1000
+    const refreshExpiry = tokenRow.oauth2_token?.refresh_token_expires_at ?? 0
+
+    if (refreshExpiry > now) {
+      // Refresh token still valid — load and trust it. The library auto-refreshes
+      // the access token on first API call if needed; no network call required here.
       GCClient.loadToken(tokenRow.oauth1_token, tokenRow.oauth2_token)
-      await GCClient.getUserProfile()
       console.log('[Garmin] Session restored from saved tokens')
       garminClient = GCClient
       return garminClient
-    } catch (err) {
-      console.warn('[Garmin] Saved tokens invalid, falling back to login:', err.message)
     }
+
+    console.warn('[Garmin] Refresh token expired, re-authenticating')
   }
 
   // Fall back to credential login
@@ -46,14 +50,19 @@ export async function getGarminClient() {
 }
 
 export async function persistTokens(GCClient) {
-  const tokens = GCClient.exportToken()
-  const { error } = await supabase.from('garmin_tokens').upsert({
-    id: 1,
-    oauth1_token: tokens.oauth1,
-    oauth2_token: tokens.oauth2,
-    updated_at: new Date().toISOString()
-  })
-  if (error) console.error('[Garmin] Failed to persist tokens:', error.message)
+  try {
+    const tokens = GCClient.exportToken()
+    const { error } = await supabase.from('garmin_tokens').upsert({
+      id: 1,
+      oauth1_token: tokens.oauth1,
+      oauth2_token: tokens.oauth2,
+      updated_at: new Date().toISOString()
+    })
+    if (error) console.error('[Garmin] Failed to persist tokens:', error.message)
+    else console.log('[Garmin] Tokens persisted to Supabase')
+  } catch (err) {
+    console.error('[Garmin] persistTokens failed:', err.message)
+  }
 }
 
 export function clearGarminClient() {
