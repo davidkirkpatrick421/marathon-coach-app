@@ -19,7 +19,7 @@ export default function App() {
   const currentWeek = getCurrentWeek()
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden">
       <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 pt-5 pb-0">
           <div className="flex items-baseline gap-2 mb-1">

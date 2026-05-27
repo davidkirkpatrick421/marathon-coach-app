@@ -42,7 +42,7 @@ export default function CadenceChart({ data }) {
               y={170}
               stroke="#f97316"
               strokeDasharray="4 2"
-              label={{ position: 'right', value: '170', fill: '#f97316', fontSize: 10 }}
+              label={{ position: 'insideTopRight', value: '170', fill: '#f97316', fontSize: 10 }}
             />
             <Line
               dataKey="cadence"
