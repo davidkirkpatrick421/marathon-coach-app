@@ -24,6 +24,7 @@ export function registerSummaryTool(server) {
         { data: phase },
         { data: checkin },
         { data: garminMetrics },
+        { data: garminSyncStatus },
       ] = await Promise.all([
         supabase
           .from('activities')
@@ -57,6 +58,11 @@ export function registerSummaryTool(server) {
           .select('date, sleep_score, sleep_duration_hrs, resting_hr, hrv_7day_avg, hrv_status, body_battery_morning')
           .gte('date', sevenDaysAgo)
           .order('date', { ascending: false }),
+        supabase
+          .from('garmin_sync_status')
+          .select('last_attempted_at, last_succeeded_at, last_error')
+          .eq('id', 1)
+          .single(),
       ])
 
       // Aggregate last 4 weeks into week totals
@@ -100,6 +106,13 @@ export function registerSummaryTool(server) {
           .sort(([a], [b]) => Number(a) - Number(b))
           .map(([week, km]) => ({ week: Number(week), km: Math.round(km * 10) / 10 })),
         latestCheckin: checkin ?? null,
+        garminSync: garminSyncStatus
+          ? {
+              lastAttempted: garminSyncStatus.last_attempted_at,
+              lastSucceeded: garminSyncStatus.last_succeeded_at,
+              lastError: garminSyncStatus.last_error ?? null,
+            }
+          : null,
         garminRecent: (garminMetrics ?? []).map(g => ({
           date: g.date,
           sleep_score: g.sleep_score,

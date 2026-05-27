@@ -13,7 +13,7 @@ import { registerPlanTools } from './tools/plan.js'
 import { registerSplitsTool } from './tools/splits.js'
 import { getValidToken } from './strava/auth.js'
 import { backfillActivities } from './strava/activities.js'
-import { syncGarminRecent } from './garmin/sync.js'
+import { syncGarminRecent, recordSyncStatus } from './garmin/sync.js'
 import { getGarminClient, persistTokens } from './garmin/client.js'
 
 const app = express()
@@ -103,6 +103,7 @@ if (process.env.GARMIN_SYNC_ENABLED === 'true') {
       await syncGarminRecent(2) // last 2 days covers any missed yesterday
     } catch (err) {
       console.error('[Garmin] Scheduled sync failed:', err.message)
+      await recordSyncStatus({ succeeded: false, error: err.message })
     }
   })
   console.log('[Garmin] Scheduled sync enabled — runs at 08:00 daily')

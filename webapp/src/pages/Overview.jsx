@@ -6,6 +6,7 @@ import ActivityFeed from '../components/ActivityFeed.jsx'
 import WeekSummaryCard from '../components/WeekSummaryCard.jsx'
 import MileageChart from '../components/MileageChart.jsx'
 import CadenceChart from '../components/CadenceChart.jsx'
+import GarminSyncBadge from '../components/GarminSyncBadge.jsx'
 
 export default function Overview({ currentWeek }) {
   const { activities, loading } = useActivities()
@@ -90,6 +91,9 @@ export default function Overview({ currentWeek }) {
           </div>
         </section>
       </div>
+
+      {/* Garmin sync status */}
+      <GarminSyncBadge />
 
       {/* Phase Progress */}
       <section>

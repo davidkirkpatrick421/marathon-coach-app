@@ -1,6 +1,19 @@
 import { getGarminClient, clearGarminClient, persistTokens } from './client.js'
 import supabase from '../db/supabase.js'
 
+export async function recordSyncStatus({ succeeded, error = null }) {
+  const now = new Date().toISOString()
+  const update = {
+    id: 1,
+    last_attempted_at: now,
+    ...(succeeded ? { last_succeeded_at: now, last_error: null } : { last_error: error }),
+  }
+  const { error: dbErr } = await supabase
+    .from('garmin_sync_status')
+    .upsert(update, { onConflict: 'id' })
+  if (dbErr) console.error('[Garmin] Failed to write sync status:', dbErr.message)
+}
+
 export async function syncGarminDay(dateStr) {
   let client
   try {
@@ -92,6 +105,8 @@ export async function syncGarminRecent(days = 7) {
     const client = await getGarminClient().catch(() => null)
     if (client) await persistTokens(client)
   }
+
+  await recordSyncStatus({ succeeded: results.length > 0 })
 
   return results
 }
