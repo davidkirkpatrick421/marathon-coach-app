@@ -44,7 +44,7 @@ export function registerPlanTools(server) {
     'Record a permanent log entry for a plan change. Always call this alongside update_plan_week so there is an audit trail of what changed and why.',
     {
       week_number: z.number().int().min(1).max(52).describe('Week the adjustment applies to'),
-      adjustment_type: z.enum(['mileage', 'intensity', 'rest', 'phase_extension']).describe('Category of adjustment'),
+      adjustment_type: z.enum(['mileage', 'intensity', 'rest', 'phase_extension', 'session_removed', 'session_added']).describe('Category of adjustment'),
       original_plan: z.string().describe('What the plan said before the change'),
       adjusted_plan: z.string().describe('What the plan says after the change'),
       reason: z.string().describe('Why the adjustment was made'),
