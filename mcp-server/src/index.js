@@ -11,6 +11,7 @@ import { registerSummaryTool } from './tools/summary.js'
 import { registerCheckinTool } from './tools/checkins.js'
 import { registerPlanTools } from './tools/plan.js'
 import { registerSplitsTool } from './tools/splits.js'
+import { registerTrendsTool } from './tools/trends.js'
 import { getValidToken } from './strava/auth.js'
 import { backfillActivities } from './strava/activities.js'
 import { syncGarminRecent, recordSyncStatus } from './garmin/sync.js'
@@ -26,6 +27,7 @@ function createMcpServer() {
   registerCheckinTool(server)
   registerPlanTools(server)
   registerSplitsTool(server)
+  registerTrendsTool(server)
   return server
 }
 
