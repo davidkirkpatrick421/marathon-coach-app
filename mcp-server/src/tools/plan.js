@@ -36,17 +36,21 @@ function formatWeek(w) {
 }
 
 export function registerPlanTools(server) {
+  const PHASES = [
+    { phase: 1, name: 'Foundation', startWeek: 1, endWeek: 16 },
+  ]
+
   server.tool(
     'get_upcoming_weeks',
-    'Returns the next 2–4 weeks of planned training targets. Use for forward-looking coaching: periodisation awareness (build vs deload), long run progression, milestone preparation. Includes current week actuals so far for context.',
-    {
-      weeks: z.number().int().min(2).max(6).optional()
-        .describe('Number of future weeks to return (default 3)'),
-    },
-    async ({ weeks = 3 }) => {
+    'Returns all remaining weeks of the current training phase for complete periodisation context. Use for forward-looking coaching: deload scheduling, long run progression, phase milestone planning. Includes current week actuals so far.',
+    {},
+    async () => {
       const currentWeek = currentWeekNumber()
+      const currentPhase = PHASES.find(p => currentWeek >= p.startWeek && currentWeek <= p.endWeek)
+        ?? PHASES[PHASES.length - 1]
+
       const fromWeek = currentWeek + 1
-      const toWeek = fromWeek + weeks - 1
+      const toWeek = currentPhase.endWeek
 
       const [
         { data: upcomingRows, error },
@@ -87,6 +91,12 @@ export function registerPlanTools(server) {
         content: [{
           type: 'text',
           text: JSON.stringify({
+            phase: {
+              number: currentPhase.phase,
+              name: currentPhase.name,
+              endWeek: currentPhase.endWeek,
+              weeksRemaining: toWeek - currentWeek,
+            },
             currentWeek: {
               week: currentWeek,
               ...weekDates(currentWeek),
