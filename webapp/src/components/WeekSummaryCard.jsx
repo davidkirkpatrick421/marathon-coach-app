@@ -19,7 +19,7 @@ export default function WeekSummaryCard({ planWeek, weekStats, loading }) {
       <div className="grid grid-cols-2 gap-3">
         <Stat label="Target" value={planWeek?.total ?? '—'} />
         <Stat label="Actual" value={`${weekStats.totalKm.toFixed(1)}km`} accent />
-        <Stat label="Runs" value={`${weekStats.runs} / 3`} />
+        <Stat label="Runs" value={`${weekStats.runs} / ${planWeek?.targetRunCount ?? 3}`} />
         <Stat label="Avg HR" value={weekStats.avgHr ? `${weekStats.avgHr} bpm` : '—'} />
       </div>
 

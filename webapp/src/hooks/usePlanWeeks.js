@@ -2,18 +2,27 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase.js'
 
 function normalize(row) {
-  const km = (val) => {
+  const toNum = (val) => {
     const n = parseFloat(val)
-    return Number.isNaN(n) ? '—' : `${n}km`
+    return Number.isNaN(n) ? null : n
   }
+  const fmtRun = (val) => val !== null ? `${val}km easy` : '—'
+  const fmtKm = (val) => val !== null ? `${val}km` : '—'
+
+  const run1Km = toNum(row.run1_target_km)
+  const run2Km = toNum(row.run2_target_km)
+  const longRunKm = toNum(row.long_run_target_km)
+  const totalKm = (run1Km || 0) + (run2Km || 0) + (longRunKm || 0)
+
   return {
     week: row.week_number,
-    run1: `${parseFloat(row.run1_target_km)}km easy`,
-    run2: `${parseFloat(row.run2_target_km)}km easy`,
-    longRun: `${parseFloat(row.long_run_target_km)}km easy`,
-    total: km(row.total_target_km),
+    run1: fmtRun(run1Km),
+    run2: fmtRun(run2Km),
+    longRun: fmtRun(longRunKm),
+    total: totalKm > 0 ? `${totalKm}km` : '—',
+    targetRunCount: [run1Km, run2Km, longRunKm].filter(v => v !== null).length,
     gym: row.gym_session,
-    cycling: km(row.cycling_target_km),
+    cycling: fmtKm(toNum(row.cycling_target_km)),
     deload: row.is_deload,
     notes: row.notes ?? null,
   }

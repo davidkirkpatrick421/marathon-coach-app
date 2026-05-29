@@ -111,9 +111,9 @@ export function registerPlanTools(server) {
     {
       week_number: z.number().int().min(1).max(52).describe('Training plan week number to update'),
       total_target_km: z.number().optional().describe('New total run km target for the week'),
-      run1_target_km: z.number().optional().describe('New Run 1 distance target (km)'),
-      run2_target_km: z.number().optional().describe('New Run 2 distance target (km)'),
-      long_run_target_km: z.number().optional().describe('New long run distance target (km)'),
+      run1_target_km: z.number().nullable().optional().describe('New Run 1 distance target (km), or null to remove'),
+      run2_target_km: z.number().nullable().optional().describe('New Run 2 distance target (km), or null to remove'),
+      long_run_target_km: z.number().nullable().optional().describe('New long run distance target (km), or null to remove'),
       notes: z.string().optional().describe('Coaching note explaining the adjustment — shown on the dashboard'),
     },
     async (params) => {
@@ -132,6 +132,26 @@ export function registerPlanTools(server) {
         .eq('week_number', week_number)
 
       if (error) return { content: [{ type: 'text', text: `Plan update failed: ${error.message}` }] }
+
+      const runFields = ['run1_target_km', 'run2_target_km', 'long_run_target_km']
+      const runFieldChanged = runFields.some(f => f in updates)
+
+      if (runFieldChanged) {
+        const { data: updated } = await supabase
+          .from('plan_weeks')
+          .select('run1_target_km, run2_target_km, long_run_target_km')
+          .eq('week_number', week_number)
+          .single()
+
+        const newTotal = (parseFloat(updated.run1_target_km) || 0)
+          + (parseFloat(updated.run2_target_km) || 0)
+          + (parseFloat(updated.long_run_target_km) || 0)
+
+        await supabase
+          .from('plan_weeks')
+          .update({ total_target_km: newTotal })
+          .eq('week_number', week_number)
+      }
 
       return {
         content: [{
