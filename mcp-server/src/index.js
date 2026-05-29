@@ -100,7 +100,7 @@ if (process.env.GARMIN_SYNC_ENABLED === 'true') {
   cron.schedule('0 8 * * *', async () => {
     console.log('[Garmin] Starting scheduled sync')
     try {
-      await syncGarminRecent(2) // last 2 days covers any missed yesterday
+      await syncGarminRecent(7)
     } catch (err) {
       console.error('[Garmin] Scheduled sync failed:', err.message)
       await recordSyncStatus({ succeeded: false, error: err.message })
