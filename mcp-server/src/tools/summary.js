@@ -17,6 +17,8 @@ export function registerSummaryTool(server) {
 
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
+      const RUN_TYPES = ['Run', 'TrailRun', 'VirtualRun']
+
       const [
         { data: weekActivities },
         { data: planWeek },
@@ -25,11 +27,12 @@ export function registerSummaryTool(server) {
         { data: checkin },
         { data: garminMetrics },
         { data: garminSyncStatus },
+        { data: crossTraining },
       ] = await Promise.all([
         supabase
           .from('activities')
           .select('date, distance_km, duration_seconds, avg_pace_per_km, avg_hr, avg_cadence')
-          .eq('activity_type', 'Run')
+          .in('activity_type', RUN_TYPES)
           .eq('week_number', weekNum),
         supabase
           .from('plan_weeks')
@@ -39,7 +42,7 @@ export function registerSummaryTool(server) {
         supabase
           .from('activities')
           .select('week_number, distance_km')
-          .eq('activity_type', 'Run')
+          .in('activity_type', RUN_TYPES)
           .gte('week_number', weekNum - 4)
           .lt('week_number', weekNum),
         supabase
@@ -63,6 +66,12 @@ export function registerSummaryTool(server) {
           .select('last_attempted_at, last_succeeded_at, last_error')
           .eq('id', 1)
           .single(),
+        supabase
+          .from('activities')
+          .select('strava_id, date, name, activity_type, distance_km, duration_seconds, elevation_gain, calories, week_number')
+          .not('activity_type', 'in', `(${RUN_TYPES.join(',')})`)
+          .gte('week_number', weekNum - 3)
+          .order('date', { ascending: false }),
       ])
 
       // Aggregate last 4 weeks into week totals
@@ -121,6 +130,17 @@ export function registerSummaryTool(server) {
           hrv_7day_avg: g.hrv_7day_avg,
           hrv_status: g.hrv_status,
           body_battery_morning: g.body_battery_morning,
+        })),
+        recentCrossTraining: (crossTraining ?? []).map(a => ({
+          strava_id: a.strava_id,
+          date: a.date,
+          name: a.name,
+          activity_type: a.activity_type,
+          distance_km: a.distance_km ? parseFloat(a.distance_km) : null,
+          duration_min: a.duration_seconds ? Math.round(a.duration_seconds / 60) : null,
+          elevation_gain: a.elevation_gain,
+          calories: a.calories,
+          week_number: a.week_number,
         })),
         healthNotes: {
           knownConcerns: ['left posterior tibialis', 'heel-to-midfoot gait transition', 'sleep quality'],
