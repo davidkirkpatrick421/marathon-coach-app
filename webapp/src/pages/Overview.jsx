@@ -7,6 +7,7 @@ import WeekSummaryCard from '../components/WeekSummaryCard.jsx'
 import MileageChart from '../components/MileageChart.jsx'
 import CadenceChart from '../components/CadenceChart.jsx'
 import GarminSyncBadge from '../components/GarminSyncBadge.jsx'
+import ReadinessPanel from '../components/ReadinessPanel.jsx'
 
 export default function Overview({ currentWeek }) {
   const { activities, loading } = useActivities()
@@ -91,6 +92,12 @@ export default function Overview({ currentWeek }) {
           </div>
         </section>
       </div>
+
+      {/* Daily readiness */}
+      <section>
+        <SectionLabel>Today's Readiness</SectionLabel>
+        <ReadinessPanel />
+      </section>
 
       {/* Garmin sync status */}
       <GarminSyncBadge />
