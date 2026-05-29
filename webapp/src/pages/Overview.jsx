@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useActivities } from '../hooks/useActivities.js'
+import { usePlanWeeks } from '../hooks/usePlanWeeks.js'
 import { goals, baseline, phases, phase1Weeks, getWeekDates } from '../lib/data.js'
 import SectionLabel from '../components/SectionLabel.jsx'
 import ActivityFeed from '../components/ActivityFeed.jsx'
@@ -11,7 +12,8 @@ import ReadinessPanel from '../components/ReadinessPanel.jsx'
 
 export default function Overview({ currentWeek }) {
   const { activities, loading } = useActivities()
-  const planWeek = phase1Weeks[currentWeek - 1]
+  const { weeks: dbPlanWeeks, loading: planLoading } = usePlanWeeks()
+  const planWeek = dbPlanWeeks?.find(w => w.week === currentWeek) ?? phase1Weeks[currentWeek - 1]
 
   const weekStats = useMemo(() => {
     const weekActs = activities.filter(a => a.week_number === currentWeek)
@@ -77,7 +79,7 @@ export default function Overview({ currentWeek }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <section>
           <SectionLabel>This Week — Week {currentWeek} · {getWeekDates(currentWeek)}</SectionLabel>
-          <WeekSummaryCard planWeek={planWeek} weekStats={weekStats} loading={loading} />
+          <WeekSummaryCard planWeek={planWeek} weekStats={weekStats} loading={loading || planLoading} />
         </section>
         <section>
           <SectionLabel>Baseline — May 2026</SectionLabel>
