@@ -14,6 +14,9 @@ import { registerSplitsTool } from './tools/splits.js'
 import { registerTrendsTool } from './tools/trends.js'
 import { getValidToken } from './strava/auth.js'
 import { backfillActivities } from './strava/activities.js'
+
+const STRAVA_BASE = 'https://www.strava.com/api/v3'
+const RUN_TYPES = ['Run', 'TrailRun', 'VirtualRun']
 import { syncGarminRecent, recordSyncStatus } from './garmin/sync.js'
 import { getGarminClient, persistTokens } from './garmin/client.js'
 
@@ -57,6 +60,53 @@ app.post('/admin/backfill', async (_req, res) => {
     res.json({ status: 'ok', activities_synced: count })
   } catch (err) {
     console.error('Backfill error:', err)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// Fetch splits from Strava detail endpoint for run activities that don't have cached splits yet.
+// Run once after deploying migration 008, or any time new backfilled activities are added.
+app.post('/admin/backfill-splits', async (_req, res) => {
+  try {
+    const accessToken = await getValidToken()
+
+    const { data: activities, error } = await supabase
+      .from('activities')
+      .select('id, strava_id')
+      .in('activity_type', RUN_TYPES)
+      .is('splits', null)
+      .order('date', { ascending: false })
+
+    if (error) throw new Error(error.message)
+    if (!activities?.length) return res.json({ status: 'ok', updated: 0 })
+
+    let updated = 0
+    for (const activity of activities) {
+      try {
+        const detailRes = await fetch(`${STRAVA_BASE}/activities/${activity.strava_id}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+        if (!detailRes.ok) {
+          console.warn(`[backfill-splits] Strava ${activity.strava_id} returned ${detailRes.status}`)
+          continue
+        }
+        const detail = await detailRes.json()
+        const splits = detail.splits_metric ?? null
+        await supabase
+          .from('activities')
+          .update({ raw_data: detail, splits })
+          .eq('id', activity.id)
+        updated++
+        // Stay well inside Strava's 200-req/15-min read limit
+        await new Promise(r => setTimeout(r, 300))
+      } catch (err) {
+        console.error(`[backfill-splits] Failed for ${activity.strava_id}:`, err.message)
+      }
+    }
+
+    res.json({ status: 'ok', updated, total: activities.length })
+  } catch (err) {
+    console.error('Backfill-splits error:', err)
     res.status(500).json({ error: err.message })
   }
 })

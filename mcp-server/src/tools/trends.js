@@ -129,7 +129,7 @@ export function registerTrendsTool(server) {
       ] = await Promise.all([
         supabase
           .from('activities')
-          .select('strava_id, date, activity_type, distance_km, duration_seconds, avg_hr, avg_cadence, week_number, raw_data')
+          .select('strava_id, date, activity_type, distance_km, duration_seconds, avg_hr, avg_cadence, week_number, splits')
           .gte('week_number', startWeek)
           .lte('week_number', weekNum)
           .order('date', { ascending: true }),
@@ -163,7 +163,7 @@ export function registerTrendsTool(server) {
 
       // ── AEROBIC EFFICIENCY ────────────────────────────────────────────────
       const efPerRun = easyRuns.map(a => {
-        const splits = a.raw_data?.splits_metric ?? null
+        const splits = a.splits ?? null
         return {
           date: a.date?.split('T')[0],
           week: a.week_number,
@@ -173,7 +173,6 @@ export function registerTrendsTool(server) {
         }
       })
 
-      const efValues = efPerRun.map(r => r.ef).filter(Boolean)
       const decouplingValues = efPerRun.map(r => r.decoupling).filter(v => v !== null)
 
       const efByWeek = {}
@@ -229,9 +228,9 @@ export function registerTrendsTool(server) {
 
       // ── HR DRIFT ──────────────────────────────────────────────────────────
       const hrDriftPerRun = easyRuns
-        .filter(a => a.raw_data?.splits_metric)
+        .filter(a => a.splits)
         .map(a => {
-          const drift = calcHRDrift(a.raw_data.splits_metric, parseFloat(a.distance_km ?? 0))
+          const drift = calcHRDrift(a.splits, parseFloat(a.distance_km ?? 0))
           if (!drift) return null
           return { date: a.date?.split('T')[0], week: a.week_number, ...drift }
         })

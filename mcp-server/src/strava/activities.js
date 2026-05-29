@@ -27,6 +27,7 @@ export function mapActivity(raw) {
     calories: raw.calories != null ? Math.round(raw.calories) : null,
     week_number: getWeekNumber(raw.start_date),
     raw_data: raw,
+    splits: raw.splits_metric ?? null,
   }
 }
 

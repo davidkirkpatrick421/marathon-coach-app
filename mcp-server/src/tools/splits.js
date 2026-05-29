@@ -38,12 +38,13 @@ async function fetchAndStoreSplits(stravaId, activityDbId) {
   if (!res.ok) throw new Error(`Strava API returned ${res.status}`)
   const detail = await res.json()
 
+  const splits = detail.splits_metric ?? null
   await supabase
     .from('activities')
-    .update({ raw_data: detail })
+    .update({ raw_data: detail, splits })
     .eq('id', activityDbId)
 
-  return detail.splits_metric ?? null
+  return splits
 }
 
 export function registerSplitsTool(server) {
@@ -84,7 +85,6 @@ export function registerSplitsTool(server) {
       }
 
       const formattedSplits = formatSplits(splits)
-      const paces = formattedSplits.map(s => s.avg_hr).filter(Boolean)
       const hrs = formattedSplits.map(s => s.avg_hr).filter(Boolean)
 
       const result = {
