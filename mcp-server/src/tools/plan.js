@@ -1,7 +1,110 @@
 import { z } from 'zod'
 import supabase from '../db/supabase.js'
 
+const PLAN_START = new Date('2026-05-05')
+const RUN_TYPES = ['Run', 'TrailRun', 'VirtualRun']
+
+function currentWeekNumber() {
+  return Math.max(1, Math.floor((Date.now() - PLAN_START.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1)
+}
+
+function weekDates(weekNum) {
+  const start = new Date(PLAN_START.getTime() + (weekNum - 1) * 7 * 24 * 60 * 60 * 1000)
+  const end = new Date(start.getTime() + 6 * 24 * 60 * 60 * 1000)
+  return {
+    start: start.toISOString().split('T')[0],
+    end: end.toISOString().split('T')[0],
+  }
+}
+
+function formatWeek(w) {
+  const { start, end } = weekDates(w.week_number)
+  return {
+    week: w.week_number,
+    dates: `${start} – ${end}`,
+    isDeload: w.is_deload ?? false,
+    targets: {
+      totalKm: parseFloat(w.total_target_km ?? 0),
+      run1Km: w.run1_target_km != null ? parseFloat(w.run1_target_km) : null,
+      run2Km: w.run2_target_km != null ? parseFloat(w.run2_target_km) : null,
+      longRunKm: w.long_run_target_km != null ? parseFloat(w.long_run_target_km) : null,
+      gymSession: w.gym_session ?? null,
+      cyclingKm: w.cycling_target_km != null ? parseFloat(w.cycling_target_km) : null,
+    },
+    notes: w.notes ?? null,
+  }
+}
+
 export function registerPlanTools(server) {
+  server.tool(
+    'get_upcoming_weeks',
+    'Returns the next 2–4 weeks of planned training targets. Use for forward-looking coaching: periodisation awareness (build vs deload), long run progression, milestone preparation. Includes current week actuals so far for context.',
+    {
+      weeks: z.number().int().min(2).max(6).optional()
+        .describe('Number of future weeks to return (default 3)'),
+    },
+    async ({ weeks = 3 }) => {
+      const currentWeek = currentWeekNumber()
+      const fromWeek = currentWeek + 1
+      const toWeek = fromWeek + weeks - 1
+
+      const [
+        { data: upcomingRows, error },
+        { data: currentWeekRow },
+        { data: currentActuals },
+      ] = await Promise.all([
+        supabase
+          .from('plan_weeks')
+          .select('week_number, run1_target_km, run2_target_km, long_run_target_km, total_target_km, gym_session, cycling_target_km, is_deload, notes')
+          .gte('week_number', fromWeek)
+          .lte('week_number', toWeek)
+          .order('week_number'),
+        supabase
+          .from('plan_weeks')
+          .select('total_target_km, is_deload')
+          .eq('week_number', currentWeek)
+          .single(),
+        supabase
+          .from('activities')
+          .select('distance_km')
+          .eq('week_number', currentWeek)
+          .in('activity_type', RUN_TYPES),
+      ])
+
+      if (error) return { content: [{ type: 'text', text: `Plan fetch failed: ${error.message}` }] }
+
+      const actualKmSoFar = Math.round(
+        (currentActuals ?? []).reduce((sum, a) => sum + parseFloat(a.distance_km ?? 0), 0) * 10
+      ) / 10
+
+      const upcoming = (upcomingRows ?? []).map(formatWeek)
+      const nextDeload = upcoming.find(w => w.isDeload)
+      const longRunProgression = upcoming
+        .filter(w => w.targets.longRunKm != null)
+        .map(w => ({ week: w.week, longRunKm: w.targets.longRunKm }))
+
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({
+            currentWeek: {
+              week: currentWeek,
+              ...weekDates(currentWeek),
+              actualKmSoFar,
+              targetKm: currentWeekRow ? parseFloat(currentWeekRow.total_target_km ?? 0) : null,
+              isDeload: currentWeekRow?.is_deload ?? false,
+            },
+            upcomingWeeks: upcoming,
+            summary: {
+              nextDeloadWeek: nextDeload?.week ?? null,
+              weeksUntilDeload: nextDeload ? nextDeload.week - currentWeek : null,
+              longRunProgression,
+            },
+          }, null, 2),
+        }],
+      }
+    }
+  )
   server.tool(
     'update_plan_week',
     'Update target distances or notes for a specific training week. Use when a coaching conversation identifies an adjustment is needed — injury recovery, missed week, load correction. Always follow this with log_plan_adjustment to record why.',
