@@ -1,19 +1,8 @@
-import crypto from 'crypto'
 import { getValidToken } from './auth.js'
 import { mapActivity } from './activities.js'
 import supabase from '../db/supabase.js'
 
 const STRAVA_BASE = 'https://www.strava.com/api/v3'
-
-function verifyStravaSignature(req) {
-  const sig = req.headers['x-hub-signature']
-  if (!sig) return false
-  const expected = 'sha256=' + crypto
-    .createHmac('sha256', process.env.STRAVA_CLIENT_SECRET)
-    .update(JSON.stringify(req.body))
-    .digest('hex')
-  return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))
-}
 
 async function fetchFullActivity(stravaId, accessToken) {
   const res = await fetch(`${STRAVA_BASE}/activities/${stravaId}`, {
@@ -38,8 +27,6 @@ export function webhookRoutes(app) {
 
   // Strava calls this when a new activity is created
   app.post('/webhooks/strava', async (req, res) => {
-    if (!verifyStravaSignature(req)) return res.sendStatus(401)
-
     // Acknowledge immediately — Strava expects a fast 200
     res.sendStatus(200)
 
