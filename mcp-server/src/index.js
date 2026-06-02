@@ -147,9 +147,9 @@ app.get('/health', async (_req, res) => {
   })
 })
 
-// Garmin sync at 08:00 daily — sleep data is finalised by ~07:00
+// Garmin sync at 10:00 UTC daily (11:00 BST) — gives Garmin time to finalise sleep/HRV/body battery
 if (process.env.GARMIN_SYNC_ENABLED === 'true') {
-  cron.schedule('0 8 * * *', async () => {
+  cron.schedule('0 10 * * *', async () => {
     console.log('[Garmin] Starting scheduled sync')
     try {
       await syncGarminRecent(7)
@@ -158,7 +158,7 @@ if (process.env.GARMIN_SYNC_ENABLED === 'true') {
       await recordSyncStatus({ succeeded: false, error: err.message })
     }
   })
-  console.log('[Garmin] Scheduled sync enabled — runs at 08:00 daily')
+  console.log('[Garmin] Scheduled sync enabled — runs at 10:00 UTC daily')
 }
 
 const PORT = process.env.PORT || 3000
