@@ -23,6 +23,14 @@ import { getGarminClient, persistTokens } from './garmin/client.js'
 const app = express()
 app.use(express.json())
 
+function requireAdminToken(req, res, next) {
+  const token = process.env.ADMIN_TOKEN
+  if (!token || req.headers['x-admin-token'] !== token) {
+    return res.status(401).json({ error: 'Unauthorized' })
+  }
+  next()
+}
+
 function createMcpServer() {
   const server = new McpServer({ name: 'marathon-coach', version: '1.0.0' })
   registerActivitiesTool(server)
@@ -53,7 +61,7 @@ app.get('/mcp', async (req, res) => {
 authRoutes(app)
 webhookRoutes(app)
 
-app.post('/admin/backfill', async (_req, res) => {
+app.post('/admin/backfill', requireAdminToken, async (_req, res) => {
   try {
     const accessToken = await getValidToken()
     const count = await backfillActivities(accessToken)
@@ -66,7 +74,7 @@ app.post('/admin/backfill', async (_req, res) => {
 
 // Fetch splits from Strava detail endpoint for run activities that don't have cached splits yet.
 // Run once after deploying migration 008, or any time new backfilled activities are added.
-app.post('/admin/backfill-splits', async (_req, res) => {
+app.post('/admin/backfill-splits', requireAdminToken, async (_req, res) => {
   try {
     const accessToken = await getValidToken()
 
@@ -113,7 +121,7 @@ app.post('/admin/backfill-splits', async (_req, res) => {
 
 // One-time setup: login with credentials, save OAuth tokens to Supabase.
 // After this, GARMIN_EMAIL / GARMIN_PASSWORD are only needed if tokens become invalid.
-app.post('/admin/garmin/auth', async (_req, res) => {
+app.post('/admin/garmin/auth', requireAdminToken, async (_req, res) => {
   try {
     const client = await getGarminClient()
     await persistTokens(client)
@@ -125,7 +133,7 @@ app.post('/admin/garmin/auth', async (_req, res) => {
 })
 
 // Manual sync trigger — useful for testing and backfilling missed days
-app.post('/sync/garmin', async (req, res) => {
+app.post('/sync/garmin', requireAdminToken, async (req, res) => {
   const days = Math.min(parseInt(req.query.days) || 7, 30)
   try {
     const results = await syncGarminRecent(days)
