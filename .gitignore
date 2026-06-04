@@ -18,3 +18,4 @@ webapp/.vercel/
 .DS_Store
 *.log
 CLAUDE.md
+.vibe-check/

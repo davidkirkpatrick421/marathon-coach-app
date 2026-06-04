@@ -68,6 +68,18 @@ export default function ReadinessPanel() {
 
   const today = metrics[0] ?? null
 
+  // Garmin attributes sleep/HRV/resting HR to the night's start date (yesterday).
+  // Fall back to previous day's row for those fields when today's are null.
+  const prev = metrics[1] ?? null
+  const sleepSource = (today?.sleep_score != null) ? today : prev
+  const displayMetrics = today ? {
+    ...today,
+    sleep_score:    today.sleep_score    ?? sleepSource?.sleep_score,
+    resting_hr:     today.resting_hr     ?? sleepSource?.resting_hr,
+    hrv_status:     today.hrv_status     ?? sleepSource?.hrv_status,
+    hrv_7day_avg:   today.hrv_7day_avg   ?? sleepSource?.hrv_7day_avg,
+  } : null
+
   if (!today) {
     return (
       <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
@@ -82,8 +94,8 @@ export default function ReadinessPanel() {
   const avgRestingHr = prevHr.length
     ? Math.round(prevHr.reduce((a, b) => a + b, 0) / prevHr.length)
     : null
-  const hrDelta = today.resting_hr != null && avgRestingHr != null
-    ? today.resting_hr - avgRestingHr
+  const hrDelta = displayMetrics.resting_hr != null && avgRestingHr != null
+    ? displayMetrics.resting_hr - avgRestingHr
     : null
 
   const dataDate = new Date(today.date + 'T00:00:00').toLocaleDateString('en-GB', {
@@ -100,28 +112,28 @@ export default function ReadinessPanel() {
       <div className="space-y-3">
         <Row
           label="Body Battery"
-          value={today.body_battery_morning != null ? `${today.body_battery_morning}%` : '—'}
-          color={batteryColor(today.body_battery_morning)}
-          dotCount={today.body_battery_morning != null
-            ? Math.min(5, Math.round(today.body_battery_morning / 20))
+          value={displayMetrics.body_battery_morning != null ? `${displayMetrics.body_battery_morning}%` : '—'}
+          color={batteryColor(displayMetrics.body_battery_morning)}
+          dotCount={displayMetrics.body_battery_morning != null
+            ? Math.min(5, Math.round(displayMetrics.body_battery_morning / 20))
             : null}
         />
         <Row
           label="Sleep Score"
-          value={today.sleep_score != null ? String(today.sleep_score) : '—'}
-          color={sleepColor(today.sleep_score)}
-          dotCount={today.sleep_score != null
-            ? Math.min(5, Math.round(today.sleep_score / 20))
+          value={displayMetrics.sleep_score != null ? String(displayMetrics.sleep_score) : '—'}
+          color={sleepColor(displayMetrics.sleep_score)}
+          dotCount={displayMetrics.sleep_score != null
+            ? Math.min(5, Math.round(displayMetrics.sleep_score / 20))
             : null}
         />
         <Row
           label="HRV Status"
-          value={today.hrv_status ?? '—'}
-          color={hrvColor(today.hrv_status)}
+          value={displayMetrics.hrv_status ?? '—'}
+          color={hrvColor(displayMetrics.hrv_status)}
         />
         <Row
           label="Resting HR"
-          value={today.resting_hr != null ? `${today.resting_hr} bpm` : '—'}
+          value={displayMetrics.resting_hr != null ? `${displayMetrics.resting_hr} bpm` : '—'}
           color={hrDeltaColor(hrDelta)}
           sub={hrDelta != null
             ? `${hrDelta > 0 ? '+' : ''}${hrDelta} vs 7-day avg`
