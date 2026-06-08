@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import supabase from '../db/supabase.js'
 
-const PLAN_START = new Date('2026-05-05')
+const PLAN_START = new Date('2026-05-04')
 const RUN_TYPES = ['Run', 'TrailRun', 'VirtualRun']
 
 function currentWeekNumber() {
