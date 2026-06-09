@@ -1,22 +1,13 @@
 import { useGarminMetrics } from '../hooks/useGarminMetrics.js'
 
-const COLORS = {
-  green:   { text: 'text-emerald-400', dot: 'text-emerald-400' },
-  amber:   { text: 'text-amber-400',   dot: 'text-amber-400'   },
-  red:     { text: 'text-red-400',     dot: 'text-red-400'     },
-  neutral: { text: 'text-slate-300',   dot: 'text-slate-700'   },
-}
-
 function batteryColor(v) {
   if (v == null) return 'neutral'
   return v > 80 ? 'green' : v >= 60 ? 'amber' : 'red'
 }
-
 function sleepColor(v) {
   if (v == null) return 'neutral'
   return v > 75 ? 'green' : v >= 60 ? 'amber' : 'red'
 }
-
 function hrvColor(status) {
   if (!status) return 'neutral'
   const s = status.toUpperCase()
@@ -24,37 +15,28 @@ function hrvColor(status) {
   if (s === 'UNBALANCED') return 'amber'
   return 'red'
 }
-
 function hrDeltaColor(delta) {
   if (delta == null) return 'neutral'
   return delta > 5 ? 'red' : delta > 2 ? 'amber' : 'green'
 }
 
-function Dots({ count, color }) {
-  const cls = COLORS[color]?.dot ?? COLORS.neutral.dot
-  return (
-    <span className="tracking-widest font-mono text-xs leading-none">
-      {Array.from({ length: 5 }, (_, i) => (
-        <span key={i} className={i < count ? cls : 'text-slate-700'}>
-          {i < count ? '●' : '○'}
-        </span>
-      ))}
-    </span>
-  )
+const VALUE_COLOR = {
+  green:   'text-success-green',
+  amber:   'text-primary',
+  red:     'text-error',
+  neutral: 'text-on-surface',
 }
 
-function Row({ label, value, color, dotCount, sub }) {
-  const textCls = COLORS[color]?.text ?? COLORS.neutral.text
+function Chip({ icon, label, value, color, sub }) {
+  const valueCls = VALUE_COLOR[color] ?? VALUE_COLOR.neutral
   return (
-    <div className="flex items-center gap-3">
-      <span className="text-xs font-mono text-slate-500 w-24 shrink-0">{label}</span>
-      <span className={`text-sm font-mono font-medium ${textCls} w-20 shrink-0`}>{value}</span>
-      <span className="ml-auto">
-        {dotCount != null
-          ? <Dots count={dotCount} color={color} />
-          : <span className="text-xs font-mono text-slate-600">{sub ?? ''}</span>
-        }
-      </span>
+    <div className="bg-surface-container-high rounded-xl p-4 border border-white/5 flex flex-col gap-2">
+      <div className="flex items-center gap-2 text-on-surface-variant">
+        <span className="material-symbols-outlined text-[18px]">{icon}</span>
+        <span className="font-label-mono text-[10px] tracking-widest uppercase">{label}</span>
+      </div>
+      <div className={`font-headline-md text-headline-md ${valueCls}`}>{value}</div>
+      {sub && <div className="font-label-mono text-label-mono text-on-surface-variant/60">{sub}</div>}
     </div>
   )
 }
@@ -63,77 +45,75 @@ export default function ReadinessPanel() {
   const { metrics, loading } = useGarminMetrics()
 
   if (loading) {
-    return <div className="bg-slate-900 border border-slate-800 rounded-lg h-36 animate-pulse" />
+    return <div className="bg-surface-container-low rounded-xl border border-white/5 h-36 animate-pulse" />
   }
 
   const today = metrics[0] ?? null
-
-  // Garmin attributes sleep/HRV/resting HR to the night's start date (yesterday).
-  // Fall back to previous day's row for those fields when today's are null.
-  const prev = metrics[1] ?? null
+  const prev  = metrics[1] ?? null
   const sleepSource = (today?.sleep_score != null) ? today : prev
-  const displayMetrics = today ? {
+  const m = today ? {
     ...today,
-    sleep_score:    today.sleep_score    ?? sleepSource?.sleep_score,
-    resting_hr:     today.resting_hr     ?? sleepSource?.resting_hr,
-    hrv_status:     today.hrv_status     ?? sleepSource?.hrv_status,
-    hrv_7day_avg:   today.hrv_7day_avg   ?? sleepSource?.hrv_7day_avg,
+    sleep_score:  today.sleep_score  ?? sleepSource?.sleep_score,
+    resting_hr:   today.resting_hr   ?? sleepSource?.resting_hr,
+    hrv_status:   today.hrv_status   ?? sleepSource?.hrv_status,
+    hrv_7day_avg: today.hrv_7day_avg ?? sleepSource?.hrv_7day_avg,
   } : null
 
   if (!today) {
     return (
-      <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
-        <div className="text-xs font-mono tracking-widest text-slate-500 uppercase mb-3">Today's Readiness</div>
-        <div className="text-xs font-mono text-slate-600">No Garmin data yet — syncs at 09:00 BST</div>
+      <div className="bg-surface-container-low rounded-xl border border-white/5 p-6">
+        <div className="font-label-mono text-label-mono text-on-surface-variant uppercase tracking-widest mb-3">
+          Today's Readiness
+        </div>
+        <div className="font-label-mono text-label-mono text-on-surface-variant/50">
+          No Garmin data yet — syncs at 09:00 BST
+        </div>
       </div>
     )
   }
 
-  // 7-day avg resting HR from previous days (exclude today to avoid circularity)
-  const prevHr = metrics.slice(1).filter(m => m.resting_hr != null).map(m => m.resting_hr)
+  const prevHr = metrics.slice(1).filter(x => x.resting_hr != null).map(x => x.resting_hr)
   const avgRestingHr = prevHr.length
     ? Math.round(prevHr.reduce((a, b) => a + b, 0) / prevHr.length)
     : null
-  const hrDelta = displayMetrics.resting_hr != null && avgRestingHr != null
-    ? displayMetrics.resting_hr - avgRestingHr
-    : null
+  const hrDelta = m.resting_hr != null && avgRestingHr != null ? m.resting_hr - avgRestingHr : null
 
   const dataDate = new Date(today.date + 'T00:00:00').toLocaleDateString('en-GB', {
     weekday: 'short', day: 'numeric', month: 'short',
   })
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
-      <div className="flex items-center justify-between mb-4">
-        <div className="text-xs font-mono tracking-widest text-slate-500 uppercase">Today's Readiness</div>
-        <div className="text-xs font-mono text-slate-700">{dataDate}</div>
+    <div className="bg-surface-container-low rounded-xl border border-white/5 p-6 flex flex-col gap-4 h-full">
+      <div className="flex items-center justify-between">
+        <div className="font-label-mono text-label-mono text-on-surface-variant uppercase tracking-widest">
+          Today's Readiness
+        </div>
+        <div className="font-label-mono text-label-mono text-on-surface-variant/50">{dataDate}</div>
       </div>
 
-      <div className="space-y-3">
-        <Row
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Chip
+          icon="battery_charging_full"
           label="Body Battery"
-          value={displayMetrics.body_battery_morning != null ? `${displayMetrics.body_battery_morning}%` : '—'}
-          color={batteryColor(displayMetrics.body_battery_morning)}
-          dotCount={displayMetrics.body_battery_morning != null
-            ? Math.min(5, Math.round(displayMetrics.body_battery_morning / 20))
-            : null}
+          value={m.body_battery_morning != null ? `${m.body_battery_morning}%` : '—'}
+          color={batteryColor(m.body_battery_morning)}
         />
-        <Row
+        <Chip
+          icon="bedtime"
           label="Sleep Score"
-          value={displayMetrics.sleep_score != null ? String(displayMetrics.sleep_score) : '—'}
-          color={sleepColor(displayMetrics.sleep_score)}
-          dotCount={displayMetrics.sleep_score != null
-            ? Math.min(5, Math.round(displayMetrics.sleep_score / 20))
-            : null}
+          value={m.sleep_score != null ? String(m.sleep_score) : '—'}
+          color={sleepColor(m.sleep_score)}
         />
-        <Row
+        <Chip
+          icon="monitor_heart"
           label="HRV Status"
-          value={displayMetrics.hrv_status ?? '—'}
-          color={hrvColor(displayMetrics.hrv_status)}
+          value={m.hrv_status ?? '—'}
+          color={hrvColor(m.hrv_status)}
         />
-        <Row
+        <Chip
+          icon="favorite"
           label="Resting HR"
-          value={displayMetrics.resting_hr != null ? `${displayMetrics.resting_hr} bpm` : '—'}
+          value={m.resting_hr != null ? `${m.resting_hr} bpm` : '—'}
           color={hrDeltaColor(hrDelta)}
           sub={hrDelta != null
             ? `${hrDelta > 0 ? '+' : ''}${hrDelta} vs 7-day avg`

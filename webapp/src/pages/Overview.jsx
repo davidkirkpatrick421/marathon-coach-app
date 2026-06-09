@@ -1,30 +1,44 @@
 import { useMemo } from 'react'
 import { useActivities } from '../hooks/useActivities.js'
 import { usePlanWeeks } from '../hooks/usePlanWeeks.js'
-import { goals, baseline, phases, phase1Weeks, getWeekDates } from '../lib/data.js'
-import SectionLabel from '../components/SectionLabel.jsx'
+import { phases, phase1Weeks, getWeekDates } from '../lib/data.js'
 import ActivityFeed from '../components/ActivityFeed.jsx'
 import WeekSummaryCard from '../components/WeekSummaryCard.jsx'
 import MileageChart from '../components/MileageChart.jsx'
 import CadenceChart from '../components/CadenceChart.jsx'
 import GarminSyncBadge from '../components/GarminSyncBadge.jsx'
 import ReadinessPanel from '../components/ReadinessPanel.jsx'
+import RaceGoalsHero from '../components/RaceGoalsHero.jsx'
+import WeeklyProgressRing from '../components/WeeklyProgressRing.jsx'
+
+const PHASE_ICON = {
+  Foundation:           'terrain',
+  'Aerobic Development':'water_drop',
+  'Marathon Build':     'local_fire_department',
+  Taper:                'flight_takeoff',
+}
+const PHASE_COLOR_CLASS = {
+  Foundation:           'text-phase-foundation border-phase-foundation/30',
+  'Aerobic Development':'text-phase-aerobic border-phase-aerobic/30',
+  'Marathon Build':     'text-phase-build border-phase-build/30',
+  Taper:                'text-phase-taper border-phase-taper/30',
+}
 
 export default function Overview({ currentWeek }) {
-  const { activities, loading } = useActivities()
+  const { activities, loading }             = useActivities()
   const { weeks: dbPlanWeeks, loading: planLoading } = usePlanWeeks()
   const planWeek = dbPlanWeeks?.find(w => w.week === currentWeek) ?? phase1Weeks[currentWeek - 1]
 
   const weekStats = useMemo(() => {
     const weekActs = activities.filter(a => a.week_number === currentWeek)
-    const runs = weekActs.filter(a => a.activity_type === 'Run')
-    const totalKm = runs.reduce((sum, a) => sum + parseFloat(a.distance_km || 0), 0)
-    const runsWithHr = runs.filter(a => a.avg_hr)
-    const avgHr = runsWithHr.length
+    const runs     = weekActs.filter(a => ['Run', 'TrailRun', 'VirtualRun'].includes(a.activity_type))
+    const totalKm  = runs.reduce((sum, a) => sum + parseFloat(a.distance_km || 0), 0)
+    const runsWithHr  = runs.filter(a => a.avg_hr)
+    const avgHr       = runsWithHr.length
       ? Math.round(runsWithHr.reduce((s, a) => s + a.avg_hr, 0) / runsWithHr.length)
       : null
     const runsWithCad = runs.filter(a => a.avg_cadence)
-    const avgCadence = runsWithCad.length
+    const avgCadence  = runsWithCad.length
       ? Math.round(runsWithCad.reduce((s, a) => s + a.avg_cadence, 0) / runsWithCad.length)
       : null
     return { runs: runs.length, totalKm, avgHr, avgCadence }
@@ -33,7 +47,7 @@ export default function Overview({ currentWeek }) {
   const weeklyData = useMemo(() =>
     phase1Weeks.slice(0, currentWeek).map(w => {
       const actual = activities
-        .filter(a => a.week_number === w.week && a.activity_type === 'Run')
+        .filter(a => a.week_number === w.week && ['Run', 'TrailRun', 'VirtualRun'].includes(a.activity_type))
         .reduce((sum, a) => sum + parseFloat(a.distance_km || 0), 0)
       return { week: `W${w.week}`, planned: parseFloat(w.total), actual: parseFloat(actual.toFixed(1)) }
     }),
@@ -52,126 +66,134 @@ export default function Overview({ currentWeek }) {
     [activities]
   )
 
-  return (
-    <div className="space-y-7">
+  const targetKm = planWeek ? parseFloat(planWeek.total) : 0
 
-      {/* Race Goals */}
-      <section>
-        <SectionLabel>Race Goals</SectionLabel>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {goals.map(g => (
-            <div
-              key={g.label}
-              className="bg-slate-900 border border-slate-800 rounded-lg p-4"
-              style={{ borderTop: `3px solid ${g.color}` }}
-            >
-              <div className="text-xl mb-2">{g.emoji}</div>
-              <div className="text-xs font-mono tracking-widest text-slate-500 uppercase mb-1">{g.label}</div>
-              <div className="text-2xl font-mono font-semibold mb-0.5" style={{ color: g.color }}>{g.time}</div>
-              <div className="text-xs font-mono text-slate-600 mb-2">{g.pace}</div>
-              <div className="text-xs text-slate-400 leading-relaxed">{g.note}</div>
-            </div>
-          ))}
+  return (
+    <div className="flex flex-col gap-12">
+
+      {/* Context header */}
+      <section className="flex flex-col gap-2">
+        <div className="font-label-mono text-label-mono text-primary tracking-widest uppercase">
+          Belfast Marathon <span className="text-on-surface-variant/50">//</span> May 2027
         </div>
+        <h1 className="font-headline-lg text-headline-lg md:font-display-lg md:text-display-lg text-on-surface">
+          David's Training Plan
+        </h1>
       </section>
 
-      {/* Week Summary + Baseline */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <section>
-          <SectionLabel>This Week — Week {currentWeek} · {getWeekDates(currentWeek)}</SectionLabel>
-          <WeekSummaryCard planWeek={planWeek} weekStats={weekStats} loading={loading || planLoading} />
+      {/* Desktop: Race Goals 3-col grid (hidden on mobile — in Goals tab) */}
+      <section className="hidden sm:block">
+        <RaceGoalsHero />
+      </section>
+
+      {/* Mobile-only: Weekly Progress Ring */}
+      <section className="flex flex-col items-center sm:hidden">
+        <WeeklyProgressRing
+          actualKm={weekStats.totalKm}
+          targetKm={targetKm}
+          currentWeek={currentWeek}
+        />
+      </section>
+
+      {/* Week summary + Readiness — side by side on desktop, same height */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <section className="flex flex-col gap-2">
+          <div className="font-label-mono text-label-mono text-on-surface-variant uppercase tracking-widest">
+            This Week — Week {currentWeek} · {getWeekDates(currentWeek)}
+          </div>
+          <div className="flex-1">
+            <WeekSummaryCard planWeek={planWeek} weekStats={weekStats} loading={loading || planLoading} />
+          </div>
         </section>
-        <section>
-          <SectionLabel>Baseline — May 2026</SectionLabel>
-          <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 grid grid-cols-2 gap-x-4 gap-y-3">
-            {baseline.map(b => (
-              <div key={b.label}>
-                <div className="text-xs font-mono text-slate-600 mb-0.5">{b.label}</div>
-                <div className="text-sm font-mono text-slate-200">{b.value}</div>
-                <div className="text-xs font-mono text-slate-600">{b.sub}</div>
-              </div>
-            ))}
+        <section className="flex flex-col gap-2">
+          <div className="font-label-mono text-label-mono invisible select-none" aria-hidden="true">&nbsp;</div>
+          <div className="flex-1">
+            <ReadinessPanel />
           </div>
         </section>
       </div>
 
-      {/* Daily readiness */}
-      <section>
-        <SectionLabel>Today's Readiness</SectionLabel>
-        <ReadinessPanel />
-      </section>
-
-      {/* Garmin sync status */}
+      {/* Garmin sync */}
       <GarminSyncBadge />
 
-      {/* Phase Progress */}
-      <section>
-        <SectionLabel>Phase 1 Progress</SectionLabel>
-        <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
-          <div className="flex justify-between text-sm mb-2">
-            <span className="text-slate-400">Foundation — May–Aug 2026</span>
-            <span className="text-orange-400 font-mono font-medium">Week {currentWeek} / 16</span>
+      {/* Phase 1 Progress */}
+      <section className="flex flex-col gap-4">
+        <div className="font-label-mono text-label-mono text-on-surface-variant uppercase tracking-widest">
+          Phase 1 Progress
+        </div>
+        <div className="bg-surface-container-low rounded-xl border border-white/5 p-6 flex flex-col gap-4">
+          <div className="flex justify-between items-center">
+            <span className="font-body-md text-body-md text-on-surface-variant">Foundation — May–Aug 2026</span>
+            <span className="font-label-mono text-label-mono text-primary">Week {currentWeek} / 16</span>
           </div>
-          <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+          <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
             <div
-              className="h-1.5 bg-orange-500 rounded-full transition-all"
+              className="h-full bg-phase-foundation rounded-full transition-all"
               style={{ width: `${(currentWeek / 16) * 100}%` }}
             />
           </div>
-          <div className="text-xs font-mono text-slate-600 mt-2">
+          <div className="font-label-mono text-label-mono text-on-surface-variant/60">
             {planWeek?.total} target · {16 - currentWeek} weeks remaining
           </div>
         </div>
       </section>
 
       {/* Year at a Glance */}
-      <section>
-        <SectionLabel>Year at a Glance</SectionLabel>
-        <div className="space-y-2">
-          {phases.map(p => (
-            <div
-              key={p.id}
-              className={`bg-slate-900 border border-slate-800 rounded-lg px-4 py-3 flex items-center gap-4 transition-opacity ${!p.active ? 'opacity-50' : ''}`}
-              style={{ borderLeft: `3px solid ${p.color}` }}
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="text-xs font-mono font-semibold shrink-0" style={{ color: p.color }}>
-                  Phase {p.id}
-                </span>
-                {p.active && (
-                  <span className="text-xs font-mono px-1.5 py-0.5 rounded shrink-0 text-black" style={{ background: p.color }}>
-                    ACTIVE
+      <section className="flex flex-col gap-4">
+        <div className="font-label-mono text-label-mono text-on-surface-variant uppercase tracking-widest">
+          Year at a Glance
+        </div>
+        <div className="flex flex-col gap-3">
+          {phases.map(p => {
+            const colorCls = PHASE_COLOR_CLASS[p.name] ?? 'text-on-surface-variant border-white/10'
+            const icon     = PHASE_ICON[p.name] ?? 'timeline'
+            return (
+              <div
+                key={p.id}
+                className={`bg-surface-container-low rounded-xl border px-5 py-4 flex items-center gap-4 transition-opacity ${colorCls} ${!p.active ? 'opacity-50' : ''}`}
+              >
+                <span className={`material-symbols-outlined text-[20px]`}>{icon}</span>
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="font-body-md text-body-md font-semibold text-on-surface shrink-0">{p.name}</span>
+                  {p.active && (
+                    <span className="font-label-mono text-[10px] px-2 py-0.5 rounded-full bg-success-green/20 text-success-green border border-success-green/30 uppercase tracking-wider shrink-0">
+                      Active
+                    </span>
+                  )}
+                  {!p.active && (
+                    <span className="font-label-mono text-label-mono text-on-surface-variant/40 uppercase shrink-0">
+                      Upcoming
+                    </span>
+                  )}
+                  <span className="font-body-md text-body-md text-on-surface-variant truncate hidden sm:block">
+                    {p.goal}
                   </span>
-                )}
-                <span className="text-sm text-slate-300 shrink-0">{p.name}</span>
-                <span className="text-xs text-slate-500 truncate hidden sm:block">— {p.goal}</span>
+                </div>
+                <div className="ml-auto text-right shrink-0">
+                  <div className="font-label-mono text-label-mono text-on-surface-variant">{p.dates}</div>
+                  <div className="font-label-mono text-label-mono text-on-surface-variant/40">Wks {p.weeks}</div>
+                </div>
               </div>
-              <div className="ml-auto text-right shrink-0">
-                <div className="text-xs font-mono text-slate-500">{p.dates}</div>
-                <div className="text-xs font-mono text-slate-700">Wks {p.weeks}</div>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </section>
 
-      {/* Recent Activities */}
-      <section>
-        <SectionLabel>Recent Activities</SectionLabel>
-        <ActivityFeed activities={activities.slice(0, 8)} loading={loading} />
+      {/* Charts — 2-col on desktop, stacked on mobile */}
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <MileageChart data={weeklyData} />
+        <CadenceChart data={cadenceData} />
       </section>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <section>
-          <SectionLabel>Weekly Mileage</SectionLabel>
-          <MileageChart data={weeklyData} />
-        </section>
-        <section>
-          <SectionLabel>Cadence Trend</SectionLabel>
-          <CadenceChart data={cadenceData} />
-        </section>
-      </div>
+      {/* Recent Activities — last 3 only; full list is in Activities tab */}
+      <section className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <div className="font-label-mono text-label-mono text-on-surface-variant uppercase tracking-widest">
+            Latest Activity
+          </div>
+        </div>
+        <ActivityFeed activities={activities.slice(0, 3)} loading={loading} />
+      </section>
 
     </div>
   )

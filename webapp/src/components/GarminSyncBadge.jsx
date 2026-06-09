@@ -23,9 +23,9 @@ export default function GarminSyncBadge() {
   const isStale = hoursSinceSuccess > 26
   const isFailed = !succeededAt || (status.last_error && new Date(status.last_attempted_at) > succeededAt)
 
-  const dotColor = isFailed || isStale
-    ? (hoursSinceSuccess > 48 ? 'bg-red-500' : 'bg-amber-500')
-    : 'bg-emerald-500'
+  const dotColor = (isFailed || isStale)
+    ? (hoursSinceSuccess > 48 ? 'bg-error' : 'bg-primary')
+    : 'bg-success-green'
 
   const label = isFailed
     ? `Garmin sync failed · last ok ${timeAgo(status.last_succeeded_at) ?? 'never'}`
@@ -34,11 +34,11 @@ export default function GarminSyncBadge() {
     : `Garmin synced ${timeAgo(status.last_succeeded_at)}`
 
   return (
-    <div className="flex items-center gap-2 text-xs font-mono text-slate-500">
+    <div className="flex items-center gap-2 font-label-mono text-label-mono text-on-surface-variant/60">
       <span className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
       <span>{label}</span>
       {isFailed && status.last_error && (
-        <span className="text-slate-700 truncate max-w-xs hidden sm:block">— {status.last_error}</span>
+        <span className="text-on-surface-variant/30 truncate max-w-xs hidden sm:block">— {status.last_error}</span>
       )}
     </div>
   )

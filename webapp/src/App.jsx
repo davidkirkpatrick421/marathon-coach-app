@@ -1,23 +1,27 @@
 import { useState } from 'react'
-import { goals, getCurrentWeek } from './lib/data.js'
+import ScrollToTop from './components/ScrollToTop.jsx'
+import { getCurrentWeek } from './lib/data.js'
 import Overview from './pages/Overview.jsx'
-import Phase1 from './pages/Phase1.jsx'
-import Strength from './pages/Strength.jsx'
-import Nutrition from './pages/Nutrition.jsx'
-import Principles from './pages/Principles.jsx'
+import Goals from './pages/Goals.jsx'
+import Phases from './pages/Phases.jsx'
+import Activities from './pages/Activities.jsx'
+import Trends from './pages/Trends.jsx'
+import Resources from './pages/Resources.jsx'
 
 const TABS = [
-  { id: 'overview',   label: 'Overview' },
-  { id: 'phase1',     label: 'Phase 1' },
-  { id: 'strength',   label: 'Strength' },
-  { id: 'nutrition',  label: 'Nutrition' },
-  { id: 'principles', label: 'Principles' },
+  { id: 'overview',   label: 'Overview'    },
+  { id: 'goals',      label: 'Goals'       },
+  { id: 'phases',     label: 'Phases'      },
+  { id: 'activities', label: 'Activities'  },
+  { id: 'trends',     label: 'Trends'      },
+  { id: 'resources',  label: 'Resources'   },
 ]
 
 export default function App() {
-  const [tab, setTab] = useState('overview')
+  const [tab, setTab]         = useState('overview')
   const [menuOpen, setMenuOpen] = useState(false)
-  const currentWeek = getCurrentWeek()
+  const currentWeek           = getCurrentWeek()
+  const activeLabel           = TABS.find(t => t.id === tab)?.label ?? ''
 
   function selectTab(id) {
     setTab(id)
@@ -25,105 +29,87 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden">
-      <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-10 relative">
-        <div className="max-w-4xl mx-auto px-4 pt-5 pb-0">
-          <div className="flex items-baseline gap-2 mb-1">
-            <span className="text-xs font-mono tracking-widest text-orange-500 uppercase">Belfast Marathon</span>
-            <span className="text-xs font-mono text-slate-600">// May 2027</span>
-          </div>
-          <div className="flex items-baseline justify-between mb-4">
-            <h1 className="text-xl font-semibold text-slate-100">David's Training Plan</h1>
-            <div className="flex items-center gap-4">
-              <div className="hidden sm:flex items-center gap-4">
-                {goals.map(g => (
-                  <span key={g.label} className="text-sm font-mono" style={{ color: g.color }}>
-                    {g.emoji} {g.time}
-                  </span>
-                ))}
-              </div>
-              <span className="text-xs font-mono text-slate-600">Wk {currentWeek} · Ph1</span>
-            </div>
-          </div>
+    <div className="min-h-screen bg-background text-on-background">
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-white/5">
 
-          {/* Desktop nav */}
-          <nav className="hidden sm:flex -mb-px">
+        {/* Desktop nav — horizontal tabs */}
+        <nav className="hidden md:flex overflow-x-auto hide-scrollbar px-margin-desktop gap-6">
+          {TABS.map(t => (
+            <button
+              key={t.id}
+              onClick={() => selectTab(t.id)}
+              className={`font-label-mono text-label-mono whitespace-nowrap py-4 border-b-2 transition-colors ${
+                tab === t.id
+                  ? 'text-primary font-bold border-primary'
+                  : 'text-on-surface-variant/60 border-transparent hover:text-on-surface'
+              }`}
+            >
+              {t.label.toUpperCase()}
+            </button>
+          ))}
+        </nav>
+
+        {/* Mobile nav — active page label + hamburger */}
+        <div className="flex md:hidden items-center justify-between px-margin-mobile py-4">
+          <span className="font-label-mono text-label-mono text-primary font-bold tracking-widest uppercase">
+            {activeLabel}
+          </span>
+          <button
+            onClick={() => setMenuOpen(v => !v)}
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={menuOpen}
+            className="text-on-surface-variant hover:text-on-surface transition-colors p-1 -mr-1"
+          >
+            <span className="material-symbols-outlined text-[22px]">
+              {menuOpen ? 'close' : 'menu'}
+            </span>
+          </button>
+        </div>
+      </header>
+
+      {/* Mobile dropdown — rendered outside header so it can overlap content */}
+      {menuOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-40 md:hidden"
+            onClick={() => setMenuOpen(false)}
+          />
+          <div className="fixed top-[53px] left-0 right-0 z-50 md:hidden bg-surface-container-low border-b border-white/5 shadow-2xl">
             {TABS.map(t => (
               <button
                 key={t.id}
                 onClick={() => selectTab(t.id)}
-                className={`px-4 py-2.5 text-xs font-mono tracking-wide border-b-2 transition-colors ${
+                className={`w-full flex items-center justify-between px-margin-mobile py-4 border-b border-white/5 last:border-0 font-label-mono text-label-mono tracking-widest uppercase transition-colors ${
                   tab === t.id
-                    ? 'border-orange-500 text-orange-400'
-                    : 'border-transparent text-slate-500 hover:text-slate-300'
+                    ? 'text-primary bg-primary/5'
+                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
                 }`}
               >
-                {t.label.toUpperCase()}
+                {t.label}
+                {tab === t.id && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                )}
               </button>
             ))}
-          </nav>
-
-          {/* Mobile nav bar */}
-          <div className="sm:hidden flex items-center justify-between py-2.5">
-            <span className="text-xs font-mono tracking-wide text-orange-400">
-              {TABS.find(t => t.id === tab)?.label.toUpperCase()}
-            </span>
-            <button
-              onClick={() => setMenuOpen(v => !v)}
-              className="p-1 text-slate-400 hover:text-slate-200 transition-colors"
-              aria-label="Open navigation"
-            >
-              {menuOpen ? (
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <line x1="3" y1="3" x2="15" y2="15" />
-                  <line x1="15" y1="3" x2="3" y2="15" />
-                </svg>
-              ) : (
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <line x1="2" y1="5" x2="16" y2="5" />
-                  <line x1="2" y1="9" x2="16" y2="9" />
-                  <line x1="2" y1="13" x2="16" y2="13" />
-                </svg>
-              )}
-            </button>
           </div>
-        </div>
+        </>
+      )}
 
-        {/* Mobile dropdown */}
-        {menuOpen && (
-          <>
-            <div className="fixed inset-0 z-20" onClick={() => setMenuOpen(false)} />
-            <div className="absolute top-full left-0 right-0 bg-slate-900 border-b border-slate-800 z-30 shadow-2xl sm:hidden">
-              {TABS.map(t => (
-                <button
-                  key={t.id}
-                  onClick={() => selectTab(t.id)}
-                  className={`w-full flex items-center justify-between px-4 py-3.5 text-xs font-mono tracking-wide border-b border-slate-800/60 last:border-0 transition-colors ${
-                    tab === t.id
-                      ? 'text-orange-400 bg-orange-950/20'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
-                  }`}
-                >
-                  {t.label.toUpperCase()}
-                  {tab === t.id && <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />}
-                </button>
-              ))}
-            </div>
-          </>
-        )}
-      </header>
-
-      <main className="max-w-4xl mx-auto px-4 py-6">
+      <main className="w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 flex flex-col gap-12">
         {tab === 'overview'   && <Overview currentWeek={currentWeek} />}
-        {tab === 'phase1'     && <Phase1 currentWeek={currentWeek} />}
-        {tab === 'strength'   && <Strength />}
-        {tab === 'nutrition'  && <Nutrition />}
-        {tab === 'principles' && <Principles />}
+        {tab === 'goals'      && <Goals />}
+        {tab === 'phases'     && <Phases currentWeek={currentWeek} />}
+        {tab === 'activities' && <Activities />}
+        {tab === 'trends'     && <Trends />}
+        {tab === 'resources'  && <Resources />}
       </main>
 
-      <footer className="border-t border-slate-800/50 py-4 text-center mt-8">
-        <span className="text-xs font-mono text-slate-700">Log on Strava · Belfast Marathon, May 2027</span>
+      <footer className="border-t border-white/5 py-6 mt-8">
+        <p className="text-center font-label-mono text-label-mono text-on-surface-variant/40">
+          BELFAST MARATHON · MAY 2027
+        </p>
       </footer>
+      <ScrollToTop />
     </div>
   )
 }

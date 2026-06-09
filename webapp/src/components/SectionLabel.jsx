@@ -1,6 +1,6 @@
 export default function SectionLabel({ children }) {
   return (
-    <div className="text-xs font-mono tracking-widest text-slate-500 uppercase mb-3">
+    <div className="font-label-mono text-label-mono text-on-surface-variant tracking-widest uppercase mb-3">
       {children}
     </div>
   )

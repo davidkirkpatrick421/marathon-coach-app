@@ -1,47 +1,50 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
-const TICK = { fill: '#475569', fontSize: 11, fontFamily: 'ui-monospace, monospace' }
+const TICK  = { fill: '#e0c0b1', fontSize: 10, fontFamily: "'JetBrains Mono', monospace", opacity: 0.6 }
 const TOOLTIP_STYLE = {
-  background: '#0f172a',
-  border: '1px solid #1e293b',
-  borderRadius: 6,
-  fontSize: 12,
-  fontFamily: 'ui-monospace, monospace',
+  background: '#151b2d',
+  border: '1px solid rgba(255,255,255,0.05)',
+  borderRadius: 8,
+  fontSize: 11,
+  fontFamily: "'JetBrains Mono', monospace",
 }
 
 export default function MileageChart({ data }) {
   if (!data.length) {
     return (
-      <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 h-48 flex items-center justify-center">
-        <span className="text-xs font-mono text-slate-600">No data yet</span>
+      <div className="bg-surface-container-low rounded-xl border border-white/5 p-6 h-48 flex items-center justify-center">
+        <span className="font-label-mono text-label-mono text-on-surface-variant/50">No data yet</span>
       </div>
     )
   }
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
-      <div style={{ height: 180 }}>
+    <div className="bg-surface-container-low rounded-xl border border-white/5 p-6 flex flex-col gap-4">
+      <h3 className="font-label-mono text-label-mono text-on-surface-variant uppercase tracking-widest">
+        Weekly Mileage
+      </h3>
+      <div style={{ height: 160 }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} barGap={2} barCategoryGap="30%">
-            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
             <XAxis dataKey="week" tick={TICK} axisLine={false} tickLine={false} />
             <YAxis tick={TICK} axisLine={false} tickLine={false} unit="km" width={36} />
             <Tooltip
               contentStyle={TOOLTIP_STYLE}
-              labelStyle={{ color: '#94a3b8' }}
-              itemStyle={{ color: '#cbd5e1' }}
+              labelStyle={{ color: '#e0c0b1' }}
+              itemStyle={{ color: '#dce1fb' }}
             />
-            <Bar dataKey="planned" name="Planned" fill="#1e293b" radius={[2, 2, 0, 0]} />
-            <Bar dataKey="actual"  name="Actual"  fill="#f97316" radius={[2, 2, 0, 0]} />
+            <Bar dataKey="planned" name="Planned" fill="#2e3447" radius={[2, 2, 0, 0]} />
+            <Bar dataKey="actual"  name="Actual"  fill="#ffb690" radius={[2, 2, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <div className="flex gap-4 mt-2">
-        <span className="flex items-center gap-1.5 text-xs font-mono text-slate-500">
-          <span className="w-2.5 h-2.5 rounded-sm inline-block bg-slate-700" />Planned
+      <div className="flex items-center gap-4 pt-2 border-t border-white/5">
+        <span className="flex items-center gap-1.5 font-label-mono text-[10px] text-on-surface-variant">
+          <span className="w-3 h-3 rounded-sm inline-block bg-surface-container-highest" />Planned
         </span>
-        <span className="flex items-center gap-1.5 text-xs font-mono text-orange-400">
-          <span className="w-2.5 h-2.5 rounded-sm inline-block bg-orange-500" />Actual
+        <span className="flex items-center gap-1.5 font-label-mono text-[10px] text-primary">
+          <span className="w-3 h-3 rounded-sm inline-block bg-primary" />Actual
         </span>
       </div>
     </div>

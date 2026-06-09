@@ -1,29 +1,32 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 
-const TICK = { fill: '#475569', fontSize: 11, fontFamily: 'ui-monospace, monospace' }
+const TICK  = { fill: '#e0c0b1', fontSize: 10, fontFamily: "'JetBrains Mono', monospace", opacity: 0.6 }
 const TOOLTIP_STYLE = {
-  background: '#0f172a',
-  border: '1px solid #1e293b',
-  borderRadius: 6,
-  fontSize: 12,
-  fontFamily: 'ui-monospace, monospace',
+  background: '#151b2d',
+  border: '1px solid rgba(255,255,255,0.05)',
+  borderRadius: 8,
+  fontSize: 11,
+  fontFamily: "'JetBrains Mono', monospace",
 }
 
 export default function CadenceChart({ data }) {
   if (!data.length) {
     return (
-      <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 h-48 flex items-center justify-center">
-        <span className="text-xs font-mono text-slate-600">No run data yet</span>
+      <div className="bg-surface-container-low rounded-xl border border-white/5 p-6 h-48 flex items-center justify-center">
+        <span className="font-label-mono text-label-mono text-on-surface-variant/50">No run data yet</span>
       </div>
     )
   }
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
-      <div style={{ height: 180 }}>
+    <div className="bg-surface-container-low rounded-xl border border-white/5 p-6 flex flex-col gap-4">
+      <h3 className="font-label-mono text-label-mono text-on-surface-variant uppercase tracking-widest">
+        Cadence Trend
+      </h3>
+      <div style={{ height: 160 }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
             <XAxis dataKey="date" tick={TICK} axisLine={false} tickLine={false} />
             <YAxis
               domain={[dataMin => Math.max(dataMin - 8, 130), 175]}
@@ -35,28 +38,29 @@ export default function CadenceChart({ data }) {
             />
             <Tooltip
               contentStyle={TOOLTIP_STYLE}
-              labelStyle={{ color: '#94a3b8' }}
-              itemStyle={{ color: '#fb923c' }}
+              labelStyle={{ color: '#e0c0b1' }}
+              itemStyle={{ color: '#ffb690' }}
             />
             <ReferenceLine
               y={170}
-              stroke="#f97316"
+              stroke="#ffb690"
               strokeDasharray="4 2"
-              label={{ position: 'insideTopRight', value: '170', fill: '#f97316', fontSize: 10 }}
+              opacity={0.5}
+              label={{ position: 'insideTopRight', value: '170 Target', fill: '#ffb690', fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}
             />
             <Line
               dataKey="cadence"
               name="Cadence"
-              stroke="#fb923c"
+              stroke="#ffb690"
               strokeWidth={2}
-              dot={{ fill: '#fb923c', r: 3 }}
-              activeDot={{ r: 5 }}
+              dot={{ fill: '#0c1324', stroke: '#ffb690', strokeWidth: 2, r: 3 }}
+              activeDot={{ r: 5, fill: '#ffb690' }}
             />
           </LineChart>
         </ResponsiveContainer>
       </div>
-      <div className="mt-2 text-xs font-mono text-slate-500">
-        Target: <span className="text-orange-400">170 spm</span> · last {data.length} runs
+      <div className="pt-2 border-t border-white/5 font-label-mono text-label-mono text-on-surface-variant">
+        Target: <span className="text-primary">170 spm</span> · Last {data.length} runs
       </div>
     </div>
   )
