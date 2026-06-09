@@ -26,6 +26,7 @@ export default function App() {
   function selectTab(id) {
     setTab(id)
     setMenuOpen(false)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   return (
@@ -96,7 +97,7 @@ export default function App() {
       )}
 
       <main className="w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 flex flex-col gap-12">
-        {tab === 'overview'   && <Overview currentWeek={currentWeek} />}
+        {tab === 'overview'   && <Overview currentWeek={currentWeek} onNavigate={selectTab} />}
         {tab === 'goals'      && <Goals />}
         {tab === 'phases'     && <Phases currentWeek={currentWeek} />}
         {tab === 'activities' && <Activities />}

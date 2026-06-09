@@ -24,7 +24,7 @@ const PHASE_COLOR_CLASS = {
   Taper:                'text-phase-taper border-phase-taper/30',
 }
 
-export default function Overview({ currentWeek }) {
+export default function Overview({ currentWeek, onNavigate }) {
   const { activities, loading }             = useActivities()
   const { weeks: dbPlanWeeks, loading: planLoading } = usePlanWeeks()
   const planWeek = dbPlanWeeks?.find(w => w.week === currentWeek) ?? phase1Weeks[currentWeek - 1]
@@ -121,7 +121,10 @@ export default function Overview({ currentWeek }) {
         <div className="font-label-mono text-label-mono text-on-surface-variant uppercase tracking-widest">
           Phase 1 Progress
         </div>
-        <div className="bg-surface-container-low rounded-xl border border-white/5 p-6 flex flex-col gap-4">
+        <button
+          onClick={() => onNavigate('phases')}
+          className="bg-surface-container-low rounded-xl border border-white/5 p-6 flex flex-col gap-4 text-left w-full hover:border-white/15 hover:bg-surface-container transition-colors cursor-pointer"
+        >
           <div className="flex justify-between items-center">
             <span className="font-body-md text-body-md text-on-surface-variant">Foundation — May–Aug 2026</span>
             <span className="font-label-mono text-label-mono text-primary">Week {currentWeek} / 16</span>
@@ -135,7 +138,7 @@ export default function Overview({ currentWeek }) {
           <div className="font-label-mono text-label-mono text-on-surface-variant/60">
             {planWeek?.total} target · {16 - currentWeek} weeks remaining
           </div>
-        </div>
+        </button>
       </section>
 
       {/* Year at a Glance */}
